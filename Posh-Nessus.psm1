@@ -6,13 +6,18 @@
 
 <#
 .Synopsis
-   Short description
+   Create a new Nessus Session.
 .DESCRIPTION
-   Long description
+   Creates a new Nessus Session.
 .EXAMPLE
-   Example of how to use this cmdlet
-.EXAMPLE
-   Another example of how to use this cmdlet
+   New-NessusSession -ComputerName 192.168.1.205 -Credentials (Get-Credential carlos) -Verbose
+   VERBOSE: POST https://192.168.1.205:8834/session with -1-byte payload
+   VERBOSE: received 60-byte response of content type application/json
+
+
+    Id    : 0
+    URI   : https://192.168.1.205:8834
+    Token : 50168808199c1a2197d180fa62fb9cc3cb9108054911476a
 #>
 function New-NessusSession
 {
@@ -98,13 +103,32 @@ function New-NessusSession
 
 <#
 .Synopsis
-   Short description
+   Get one or more current Nessus Sessions.
 .DESCRIPTION
-   Long description
+   Get one or more current Nessus Sessions.
 .EXAMPLE
-   Example of how to use this cmdlet
+    Get-NessusSession
+
+
+    Id    : 0
+    URI   : https://192.168.1.205:8834
+    Token : 50168808199c1a2197d180fa62fb9cc3cb9108054911476a
+
+    Id    : 1
+    URI   : https://192.168.1.205:8834
+    Token : 2683f239b257c7729a9b501a2b916c7022a730d20b536c12
+
 .EXAMPLE
-   Another example of how to use this cmdlet
+    Get-NessusSession -Id 1
+
+
+    Id    : 0
+    URI   : https://192.168.1.205:8834
+    Token : 50168808199c1a2197d180fa62fb9cc3cb9108054911476a
+
+    Id    : 1
+    URI   : https://192.168.1.205:8834
+    Token : 2683f239b257c7729a9b501a2b916c7022a730d20b536c12
 #>
 function Get-NessusSession
 {
@@ -116,7 +140,8 @@ function Get-NessusSession
                    ParameterSetName = 'Index',
                    Position=0)]
         [Alias('Index')]
-        [int32[]]$Id = @()
+        [int32[]]
+        $Id = @()
     )
 
     Begin{}
@@ -148,13 +173,18 @@ function Get-NessusSession
 
 <#
 .Synopsis
-   Short description
+   Closes one or more Nessus Sessions.
 .DESCRIPTION
-   Long description
+   Closes one or more Nessus Sessions.
 .EXAMPLE
-   Example of how to use this cmdlet
-.EXAMPLE
-   Another example of how to use this cmdlet
+    Remove-NessusSession -Id 1 -Verbose
+    VERBOSE: Removing server session 1
+    VERBOSE: Disposing of connection
+    VERBOSE: DELETE https://192.168.1.205:8834/session with 0-byte payload
+    VERBOSE: received 4-byte response of content type application/json
+    VERBOSE: Removing session from $Global:NessusConn
+    VERBOSE: Session 1 removed.
+
 #>
 function Remove-NessusSession
 {
@@ -166,7 +196,8 @@ function Remove-NessusSession
                    Position=0,
                    ValueFromPipelineByPropertyName=$true)]
         [Alias('Index')]
-        [int32[]]$Id = @()
+        [int32[]]
+        $Id = @()
     )
 
     Begin{}
@@ -188,7 +219,7 @@ function Remove-NessusSession
                 {
                     if ($Connection.Id -eq $i)
                     {
-                        $toremove.Add($Connection)
+                        [void]$toremove.Add($Connection)
                     }
                 }
             }
@@ -220,13 +251,28 @@ function Remove-NessusSession
 
 <#
 .Synopsis
-   Short description
+   Get detailed information on one or more Nessus Sessions.
 .DESCRIPTION
-   Long description
+   Get detailed information on one or more Nessus Sessions.
 .EXAMPLE
-   Example of how to use this cmdlet
-.EXAMPLE
-   Another example of how to use this cmdlet
+    Get-NessusSessionInfo -Id 0 -Verbose
+    VERBOSE: Removing server session 0
+    VERBOSE: GET https://192.168.1.205:8834/session with 0-byte payload
+    VERBOSE: received 196-byte response of content type application/json
+
+
+    lockout          : 0
+    whatsnew         : True
+    container_id     : 0
+    groups           : 
+    whatsnew_version : 
+    lastlogin        : 1422921992
+    permissions      : 128
+    type             : local
+    name             : carlos
+    email            : 
+    username         : carlos
+    id               : 2
 #>
 function Get-NessusSessionInfo
 {
@@ -252,11 +298,11 @@ function Get-NessusSessionInfo
         {
             Write-Verbose "Removing server session $($i)"
                 
-            foreach($Connection in connections)
+            foreach($Connection in $connections)
             {
                 if ($Connection.Id -eq $i)
                 {
-                    $ToProcess.Add($Connection)
+                    [void]$ToProcess.Add($Connection)
                 }
             }
 
@@ -283,13 +329,30 @@ function Get-NessusSessionInfo
 
 <#
 .Synopsis
-   Short description
+   Get information on a Nessus Server for a given session.
 .DESCRIPTION
-   Long description
+   Get information on a Nessus Server for a given session.
 .EXAMPLE
-   Example of how to use this cmdlet
-.EXAMPLE
-   Another example of how to use this cmdlet
+    Get-NessusServerInfo -Id 0 -Verbose
+    VERBOSE: GET https://192.168.1.205:8834/server/properties with 0-byte payload
+    VERBOSE: received 478-byte response of content type application/json
+
+
+    loaded_plugin_set : 201502021615
+    server_uuid       : 9b7b6864-d654-345f-57f2-aeaa5438654421ba99bb9f34e2b5
+    update            : @{href=; new_version=0; restart=0}
+    expiration        : 1505793600
+    nessus_ui_version : 6.0.2
+    nessus_type       : Nessus
+    notifications     : {}
+    expiration_time   : 959
+    capabilities      : @{multi_scanner=True; report_email_config=False}
+    plugin_set        : 201502021615
+    idle_timeout      : 
+    scanner_boottime  : 1422920519
+    login_banner      : 
+    server_version    : 6.0.2
+    feed              : ProFeed
 #>
 function Get-NessusServerInfo
 {
@@ -340,16 +403,20 @@ function Get-NessusServerInfo
 }
 
 
+
 <#
 .Synopsis
-   Short description
+   Get the current status of the Nessus Server for a session.
 .DESCRIPTION
-   Long description
+   Get the current status of the Nessus Server for a session.
 .EXAMPLE
-   Example of how to use this cmdlet
-.EXAMPLE
-   Another example of how to use this cmdlet
+   Get-NessusServerStatus -Id 0
+
+
+    Progress : 
+    Status   : ready
 #>
+
 function Get-NessusServerStatus
 {
     [CmdletBinding()]
@@ -359,7 +426,8 @@ function Get-NessusServerStatus
                    Position=0,
                    ValueFromPipelineByPropertyName=$true)]
         [Alias('Index')]
-        [int32[]]$Id = @()
+        [int32[]]
+        $Id = @()
     )
 
     Begin
@@ -389,6 +457,7 @@ function Get-NessusServerStatus
                  
             if ($ServerStatus)
             {
+                $ServerStatus.pstypenames[0] = 'Nessus.ServerStatus'
                 $ServerStatus
             }
         }
@@ -404,13 +473,22 @@ function Get-NessusServerStatus
 
 <#
 .Synopsis
-   Short description
+   Get a information about the Nessus User for a Session.
 .DESCRIPTION
-   Long description
+   Get a information about the Nessus User for a Session.
 .EXAMPLE
-   Example of how to use this cmdlet
-.EXAMPLE
-   Another example of how to use this cmdlet
+    Get-NessusUser -Id 0 -Verbose
+    VERBOSE: GET https://192.168.1.205:8834/users with 0-byte payload
+    VERBOSE: received 125-byte response of content type application/json
+
+
+    lastlogin   : 1422921992
+    permissions : 128
+    type        : local
+    name        : carlos
+    email       : 
+    username    : carlos
+    id          : 2
 #>
 function Get-NessusUser
 {

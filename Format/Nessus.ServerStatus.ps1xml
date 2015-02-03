@@ -1,0 +1,27 @@
+﻿<?xml version="1.0" encoding="utf-16"?>
+<Configuration>
+<ViewDefinitions>
+<View>
+    <Name>Nessus.ServerStatus</Name>
+    <ViewSelectedBy>
+        <TypeName>Nessus.ServerStatus</TypeName>
+    </ViewSelectedBy>
+    <ListControl>
+        <ListEntries>
+            <ListEntry>
+                <ListItems>
+                    <ListItem> 
+                        <Label>Progress</Label>
+                        <PropertyName>pogress</PropertyName>
+                    </ListItem>
+                    <ListItem>
+                        <Label>Status</Label>
+                        <PropertyName>status</PropertyName>
+                    </ListItem>
+                    </ListItems>
+            </ListEntry>
+        </ListEntries>
+    </ListControl>
+</View>
+</ViewDefinitions>
+</Configuration>

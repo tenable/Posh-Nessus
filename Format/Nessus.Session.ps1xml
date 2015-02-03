@@ -1,0 +1,31 @@
+﻿<?xml version="1.0" encoding="utf-16"?>
+<Configuration>
+<ViewDefinitions>
+<View>
+    <Name>Nessus.Session</Name>
+    <ViewSelectedBy>
+        <TypeName>Nessus.Session</TypeName>
+    </ViewSelectedBy>
+    <ListControl>
+        <ListEntries>
+            <ListEntry>
+                <ListItems>
+                    <ListItem> 
+                        <Label>Id</Label>
+                        <PropertyName>Id</PropertyName>
+                    </ListItem>
+                    <ListItem>
+                        <Label>URI</Label>
+                        <PropertyName>URI</PropertyName>
+                    </ListItem>
+                    <ListItem>
+                        <Label>Token</Label>
+                        <PropertyName>Token</PropertyName>
+                    </ListItem>
+                    </ListItems>
+            </ListEntry>
+        </ListEntries>
+    </ListControl>
+</View>
+</ViewDefinitions>
+</Configuration>
