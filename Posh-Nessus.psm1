@@ -3,6 +3,19 @@
     $Global:NessusConn = New-Object System.Collections.ArrayList
 }
  
+ $PermissionsId2Name = @{
+    16 = 'Read-Only'
+    32 = 'Regular'
+    64 = 'Administrator'
+    128 = 'Sysadmin'
+ }
+
+  $PermissionsName2Id = @{
+    'Read-Only' = 16
+    'Regular' = 32
+    'Administrator' = 64
+    'Sysadmin' = 128
+ }
 
 <#
 .Synopsis
@@ -482,13 +495,13 @@ function Get-NessusServerStatus
     VERBOSE: received 125-byte response of content type application/json
 
 
-    lastlogin   : 1422921992
-    permissions : 128
-    type        : local
-    name        : carlos
-    email       : 
-    username    : carlos
-    id          : 2
+    Name       : carlos
+    UserName   : carlos
+    Email      : 
+    Id         : 2
+    Type       : local
+    Permission : Sysadmin
+    LastLogin  : 2/15/2015 4:52:56 PM
 #>
 function Get-NessusUser
 {
@@ -500,12 +513,13 @@ function Get-NessusUser
                    Position=0,
                    ValueFromPipelineByPropertyName=$true)]
         [Alias('Index')]
-        [int32[]]$Id = @()
+        [int32[]]
+        $Id = @()
     )
 
     Begin
     {
-        
+        $origin = New-Object -Type DateTime -ArgumentList 1970, 1, 1, 0, 0, 0, 0
     }
     Process
     {
@@ -531,14 +545,24 @@ function Get-NessusUser
                  
             if ($Users)
             {
-                $Users.users
+                $Users.users | ForEach-Object -Process {
+                    $UserProperties = [ordered]@{}
+                    $UserProperties.Add('Name', $_.name)
+                    $UserProperties.Add('UserName', $_.username)
+                    $UserProperties.Add('Email', $_.email)
+                    $UserProperties.Add('Id', $_.id)
+                    $UserProperties.Add('Type', $_.type)
+                    $UserProperties.Add('Permission', $PermissionsId2Name[$_.permissions])
+                    $UserProperties.Add('LastLogin', $origin.AddSeconds($_.lastlogin).ToLocalTime())
+                    $UserObj = New-Object -TypeName psobject -Property $UserProperties
+                    $UserObj.pstypenames[0] = 'Nessus.User'
+                    $UserObj
+                }
             }
         }
         
     }
-    End
-    {
-    }
+    End{}
 }
 
 
@@ -563,27 +587,85 @@ function New-NessusUser
                    Position=0,
                    ValueFromPipelineByPropertyName=$true)]
         [Alias('Index')]
-        [int32[]]$Id = @(),
+        [int32[]]
+        $Id = @(),
 
         # Credentials for connecting to the Nessus Server
         [Parameter(Mandatory=$true,
         Position=1)]
-        [Management.Automation.PSCredential]$Credential,
+        [Management.Automation.PSCredential]
+        $Credential,
+
+        [Parameter(Mandatory=$true,
+        Position=2)]
+        [ValidateSet('Read-Only', 'Regular', 'Administrator', 'Sysadmin')]
+        [string]
+        $Permission,
 
         [Parameter(Mandatory=$false,
                    ValueFromPipelineByPropertyName=$true)]
-        [string]$Type = 'Local'
+        [ValidateSet('Local', 'LDAP')]
+        [string]
+        $Type = 'Local',
+
+        [Parameter(Mandatory=$false,
+                   ValueFromPipelineByPropertyName=$true)]
+        [string]
+        $Email,
+
+        [Parameter(Mandatory=$false,
+                   ValueFromPipelineByPropertyName=$true)]
+        [string]
+        $Name 
+
     )
 
-    Begin
-    {
-    }
+    Begin{}
     Process
     {
+         $ToProcess = @()
+
+        foreach($i in $Id)
+        {
+            $Connections = $Global:NessusConn
+            
+            foreach($Connection in $Connections)
+            {
+                if ($Connection.Id -eq $i)
+                {
+                    $ToProcess += $Connection
+                }
+            }
+        }
+
+        foreach($Connection in $ToProcess)
+        {
+            $NewUserParams = @{}
+
+            $NewUserParams.Add('type',$Type.ToLower())
+            $NewUserParams.Add('permissions', $PermissionsName2Id[$Permission])
+            $NewUserParams.Add('username', $Credential.GetNetworkCredential().UserName)
+            $NewUserParams.Add('password', $Credential.GetNetworkCredential().Password)
+
+            if ($Email.Length -gt 0)
+            {
+                $NewUserParams.Add('email', $Email)
+            }
+
+            if ($Name.Length -gt 0)
+            {
+                $NewUserParams.Add('name', $Name)
+            }
+
+            $NewUser = InvokeNessusRestRequest -SessionObject $Connection -Path '/users' -Method 'Post' -Parameter $NewUserParams
+                 
+            if ($NewUser)
+            {
+                $NewUser
+            }
+        }
     }
-    End
-    {
-    }
+    End{}
 }
 
 
@@ -597,10 +679,13 @@ function InvokeNessusRestRequest
     (
         [Parameter(Mandatory=$true)]
         $SessionObject,
+
         [Parameter(Mandatory=$false)]
         [hashtable]$Parameter,
+
         [Parameter(Mandatory=$true)]
         [string]$Path,
+
         [Parameter(Mandatory=$true)]
         [String]$Method
     )
@@ -614,7 +699,7 @@ function InvokeNessusRestRequest
 
     if ($Parameter)
     {
-        $RestMethodParams.Add($Body, $Parameter)
+        $RestMethodParams.Add('Body', $Parameter)
     }
     try
     {
