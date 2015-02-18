@@ -416,7 +416,6 @@ function Get-NessusServerInfo
 }
 
 
-
 <#
 .Synopsis
    Get the current status of the Nessus Server for a session.
@@ -566,7 +565,6 @@ function Get-NessusUser
 }
 
 
-
 <#
 .Synopsis
    Short description
@@ -669,6 +667,276 @@ function New-NessusUser
 }
 
 
+#region Folders
+####################################################################
+
+<#
+.Synopsis
+   Short description
+.DESCRIPTION
+   Long description
+.EXAMPLE
+   Example of how to use this cmdlet
+.EXAMPLE
+   Another example of how to use this cmdlet
+#>
+function Get-NessusFolder
+{
+    [CmdletBinding()]
+    Param
+    (
+        # Nessus session Id
+        [Parameter(Mandatory=$true,
+                   Position=0,
+                   ValueFromPipelineByPropertyName=$true)]
+        [Alias('Index')]
+        [int32[]]
+        $Id = @()
+    )
+
+    Begin
+    {
+    }
+    Process
+    {
+        $ToProcess = @()
+
+        foreach($i in $Id)
+        {
+            $Connections = $Global:NessusConn
+            
+            foreach($Connection in $Connections)
+            {
+                if ($Connection.Id -eq $i)
+                {
+                    $ToProcess += $Connection
+                }
+            }
+        }
+
+        foreach($Connection in $ToProcess)
+        {
+            $Folders =  InvokeNessusRestRequest -SessionObject $Connection -Path '/folders' -Method 'Get'
+
+            if ($Folders)
+            {
+                $Folders.folders
+            }
+        }
+    }
+    End
+    {
+    }
+}
+
+#endregion
+
+#region Scans
+####################################################################
+
+<#
+.Synopsis
+   Short description
+.DESCRIPTION
+   Long description
+.EXAMPLE
+   Example of how to use this cmdlet
+.EXAMPLE
+   Another example of how to use this cmdlet
+#>
+function Get-NessusScan
+{
+    [CmdletBinding()]
+    Param
+    (
+        # Nessus session Id
+        [Parameter(Mandatory=$true,
+                   Position=0,
+                   ValueFromPipelineByPropertyName=$true)]
+        [Alias('Index')]
+        [int32[]]
+        $Id = @(),
+
+        [Parameter(Mandatory=$false,
+                   Position=1,
+                   ValueFromPipelineByPropertyName=$true)]
+        [int32]
+        $FolderId 
+    )
+
+    Begin
+    {
+    }
+    Process
+    {
+        $ToProcess = @()
+
+        foreach($i in $Id)
+        {
+            $Connections = $Global:NessusConn
+            
+            foreach($Connection in $Connections)
+            {
+                if ($Connection.Id -eq $i)
+                {
+                    $ToProcess += $Connection
+                }
+            }
+        }
+        $Params = @{}
+
+        if($FolderId)
+        {
+            $Params.Add('folder_id', $FolderId)
+        }
+
+        foreach($Connection in $ToProcess)
+        {
+            $Scans =  InvokeNessusRestRequest -SessionObject $Connection -Path '/scans' -Method 'Get' -Parameter $Params
+
+            if ($Scans)
+            {
+                foreach ($scan in $Scans.scans)
+                {
+                    $scan
+                }
+            }
+        }
+    }
+    End
+    {
+    }
+}
+
+
+<#
+.Synopsis
+   Short description
+.DESCRIPTION
+   Long description
+.EXAMPLE
+   Example of how to use this cmdlet
+.EXAMPLE
+   Another example of how to use this cmdlet
+#>
+function Export-NessusScan
+{
+    [CmdletBinding()]
+    Param
+    (
+       # Nessus session Id
+        [Parameter(Mandatory=$true,
+                   Position=0,
+                   ValueFromPipelineByPropertyName=$true)]
+        [Alias('Index')]
+        [int32[]]
+        $Id = @(),
+
+        [Parameter(Mandatory=$true,
+                   Position=1,
+                   ValueFromPipelineByPropertyName=$true)]
+        [int32]
+        $ScanId,
+
+        [Parameter(Mandatory=$true,
+                   Position=2,
+                   ValueFromPipelineByPropertyName=$true)]
+        [ValidateSet('Nessus', 'HTML', 'PDF', 'CSV', 'DB')]
+        [string]
+        $Format,
+
+        [Parameter(Mandatory=$true,
+                   ValueFromPipelineByPropertyName=$true)]
+        [String]
+        $OutFile,
+
+        [Parameter(Mandatory=$false,
+                   Position=3,
+                   ValueFromPipelineByPropertyName=$true)]
+        [ValidateSet('Vuln_Hosts_Summary', 'Vuln_By_Host', 
+                     'Compliance_Exec', 'Remediations', 
+                     'Vuln_By_Plugin', 'Compliance')]
+        [string[]]
+        $Chapters,
+
+        [Parameter(Mandatory=$false,
+                   Position=4,
+                   ValueFromPipelineByPropertyName=$true)]
+        [Int32]
+        $HistoryID,
+
+        [Parameter(Mandatory=$false,
+                   ValueFromPipelineByPropertyName=$true)]
+        [securestring]
+        $Password
+
+    )
+
+    Begin
+    {
+    }
+    Process
+    {
+        $ToProcess = @()
+
+        foreach($i in $Id)
+        {
+            $Connections = $Global:NessusConn
+            
+            foreach($Connection in $Connections)
+            {
+                if ($Connection.Id -eq $i)
+                {
+                    $ToProcess += $Connection
+                }
+            }
+        }
+
+        $ExportParams = @{}
+
+        if($Format -eq 'DB' -and $Password)
+        {
+            $Credentials = New-Object System.Management.Automation.PSCredential -ArgumentList 'user', $Password
+            $ExportParams.Add('password', $Credentials.GetNetworkCredential().Password)
+        }
+
+        if($Format)
+        {
+            $ExportParams.Add('format', $Format.ToLower())
+        }
+
+        foreach($Connection in $ToProcess)
+        {
+            $path =  "/scans/$($ScanId)/export"
+            $FileID = InvokeNessusRestRequest -SessionObject $Connections -Path $path  -Method 'Post' -Parameter $ExportParams
+            if ($FileID)
+            {
+                $FileStatus = ''
+                while ($FileStatus.status -ne 'ready')
+                {
+                    try
+                    {
+                        $FileStatus = InvokeNessusRestRequest -SessionObject $Connections -Path "/scans/$($ScanId)/export/$($FileID.file)/status"  -Method 'Get'
+                    }
+                    catch
+                    {
+                        break
+                    }
+                    Start-Sleep -Seconds 1
+                }
+                if ($FileStatus.status -eq 'ready')
+                {
+                    InvokeNessusRestRequest -SessionObject $Connections -Path "/scans/$($ScanId)/export/$($FileID.file)/download" -Method 'Get' -OutFile $OutFile
+                }
+            }
+        }
+    }
+    End
+    {
+    }
+}
+#endregion
+
 # Supporting Functions
 ##################################
 
@@ -687,7 +955,11 @@ function InvokeNessusRestRequest
         [string]$Path,
 
         [Parameter(Mandatory=$true)]
-        [String]$Method
+        [String]$Method,
+
+        [Parameter(Mandatory=$false)]
+        [String]$OutFile
+
     )
 
     $RestMethodParams = @{
@@ -701,49 +973,60 @@ function InvokeNessusRestRequest
     {
         $RestMethodParams.Add('Body', $Parameter)
     }
+
+    if($OutFile)
+    {
+        $RestMethodParams.add('OutFile', $OutFile)
+    }
     try
     {
+        #$RestMethodParams.Uri
         $Results = Invoke-RestMethod @RestMethodParams
+   
     }
     catch [Net.WebException] 
     {
-        # Request failed. More than likely do to time-out.
-        # Re-Authenticating using information from session.
-        write-verbose -Message 'The session has expired, Re-authenticating'
-        $ReAuthParams = @{
-            'Method' = 'Post'
-            'URI' =  "$($SessionObject.URI)/session"
-            'Body' = @{'username' = $SessionObject.Credentials.UserName; 'password' = $SessionObject.Credentials.GetNetworkCredential().password}
-            'ErrorVariable' = 'NessusLoginError'
-            'ErrorAction' = 'SilentlyContinue'
-        }
-
-        $TokenResponse = Invoke-RestMethod @ReAuthParams
-
-        if ($NessusLoginError)
+        [int]$res = $_.Exception.Response.StatusCode
+        if ($res -eq 401)
         {
-            Write-Error -Message 'Failed to Re-Authenticate the session. Session is being Removed.'
-            $FailedConnection = $SessionObject
-            [void]$Global:NessusConn.Remove($FailedConnection)
-        }
-        else
-        {
-            Write-Verbose -Message 'Updating session with new authentication token.'
+            # Request failed. More than likely do to time-out.
+            # Re-Authenticating using information from session.
+            write-verbose -Message 'The session has expired, Re-authenticating'
+            $ReAuthParams = @{
+                'Method' = 'Post'
+                'URI' =  "$($SessionObject.URI)/session"
+                'Body' = @{'username' = $SessionObject.Credentials.UserName; 'password' = $SessionObject.Credentials.GetNetworkCredential().password}
+                'ErrorVariable' = 'NessusLoginError'
+                'ErrorAction' = 'SilentlyContinue'
+            }
 
-            # Creating new object with updated token so as to replace in the array the old one.
-            $SessionProps = New-Object -TypeName System.Collections.Specialized.OrderedDictionary
-            $SessionProps.add('URI', $SessionObject.URI)
-            $SessionProps.Add('Credentials',$SessionObject.Credentials)
-            $SessionProps.add('Token',$TokenResponse.token)
-            $SessionProps.Add('Id', $SessionObject.Id)
-            $Sessionobj = New-Object -TypeName psobject -Property $SessionProps
-            $Sessionobj.pstypenames[0] = 'Nessus.Session'
-            [void]$Global:NessusConn.Remove($SessionObject)
-            [void]$Global:NessusConn.Add($Sessionobj)
+            $TokenResponse = Invoke-RestMethod @ReAuthParams
 
-            # Re-submit query with the new token and return results.
-            $RestMethodParams.Headers = @{'X-Cookie' = "token=$($Sessionobj.Token)"}
-            $Results = Invoke-RestMethod @RestMethodParams
+            if ($NessusLoginError)
+            {
+                Write-Error -Message 'Failed to Re-Authenticate the session. Session is being Removed.'
+                $FailedConnection = $SessionObject
+                [void]$Global:NessusConn.Remove($FailedConnection)
+            }
+            else
+            {
+                Write-Verbose -Message 'Updating session with new authentication token.'
+
+                # Creating new object with updated token so as to replace in the array the old one.
+                $SessionProps = New-Object -TypeName System.Collections.Specialized.OrderedDictionary
+                $SessionProps.add('URI', $SessionObject.URI)
+                $SessionProps.Add('Credentials',$SessionObject.Credentials)
+                $SessionProps.add('Token',$TokenResponse.token)
+                $SessionProps.Add('Id', $SessionObject.Id)
+                $Sessionobj = New-Object -TypeName psobject -Property $SessionProps
+                $Sessionobj.pstypenames[0] = 'Nessus.Session'
+                [void]$Global:NessusConn.Remove($SessionObject)
+                [void]$Global:NessusConn.Add($Sessionobj)
+
+                # Re-submit query with the new token and return results.
+                $RestMethodParams.Headers = @{'X-Cookie' = "token=$($Sessionobj.Token)"}
+                $Results = Invoke-RestMethod @RestMethodParams
+            }
         }
     }
     $Results
