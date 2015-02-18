@@ -744,6 +744,282 @@ function Get-NessusFolder
 .EXAMPLE
    Another example of how to use this cmdlet
 #>
+function Suspend-NessusScan
+{
+    [CmdletBinding()]
+    Param
+    (
+        # Nessus session Id
+        [Parameter(Mandatory=$true,
+                   Position=0,
+                   ValueFromPipelineByPropertyName=$true)]
+        [Alias('Index')]
+        [int32[]]
+        $SessionId = @(),
+
+        [Parameter(Mandatory=$false,
+                   Position=1,
+                   ValueFromPipelineByPropertyName=$true)]
+        [int32]
+        $ScanId 
+    )
+
+    Begin
+    {
+    }
+    Process
+    {
+        $ToProcess = @()
+
+        foreach($i in $SessionId)
+        {
+            $Connections = $Global:NessusConn
+            
+            foreach($Connection in $Connections)
+            {
+                if ($Connection.SessionId -eq $i)
+                {
+                    $ToProcess += $Connection
+                }
+            }
+        }
+        
+        foreach($Connection in $ToProcess)
+        {
+            $Scans =  InvokeNessusRestRequest -SessionObject $Connection -Path "/scans/$($ScanId)/pause" -Method 'Post'
+
+            if ($Scans)
+            {
+                $Scans
+            }
+        }
+    }
+    End
+    {
+    }
+}
+
+
+<#
+.Synopsis
+   Short description
+.DESCRIPTION
+   Long description
+.EXAMPLE
+   Example of how to use this cmdlet
+.EXAMPLE
+   Another example of how to use this cmdlet
+#>
+function Resume-NessusScan
+{
+    [CmdletBinding()]
+    Param
+    (
+        # Nessus session Id
+        [Parameter(Mandatory=$true,
+                   Position=0,
+                   ValueFromPipelineByPropertyName=$true)]
+        [Alias('Index')]
+        [int32[]]
+        $SessionId = @(),
+
+        [Parameter(Mandatory=$true,
+                   Position=1,
+                   ValueFromPipelineByPropertyName=$true)]
+        [int32]
+        $ScanId 
+    )
+
+    Begin
+    {
+    }
+    Process
+    {
+        $ToProcess = @()
+
+        foreach($i in $SessionId)
+        {
+            $Connections = $Global:NessusConn
+            
+            foreach($Connection in $Connections)
+            {
+                if ($Connection.SessionId -eq $i)
+                {
+                    $ToProcess += $Connection
+                }
+            }
+        }
+        
+
+        foreach($Connection in $ToProcess)
+        {
+            $Scans =  InvokeNessusRestRequest -SessionObject $Connection -Path "/scans/$($ScanId)/resume" -Method 'Post'
+
+            if ($Scans)
+            {
+                $Scans
+            }
+        }
+    }
+    End
+    {
+    }
+}
+
+<#
+.Synopsis
+   Short description
+.DESCRIPTION
+   Long description
+.EXAMPLE
+   Example of how to use this cmdlet
+.EXAMPLE
+   Another example of how to use this cmdlet
+#>
+function Stop-NessusScan
+{
+    [CmdletBinding()]
+    Param
+    (
+        # Nessus session Id
+        [Parameter(Mandatory=$true,
+                   Position=0,
+                   ValueFromPipelineByPropertyName=$true)]
+        [Alias('Index')]
+        [int32[]]
+        $SessionId = @(),
+
+        [Parameter(Mandatory=$true,
+                   Position=1,
+                   ValueFromPipelineByPropertyName=$true)]
+        [int32]
+        $ScanId 
+    )
+
+    Begin
+    {
+    }
+    Process
+    {
+        $ToProcess = @()
+
+        foreach($i in $SessionId)
+        {
+            $Connections = $Global:NessusConn
+            
+            foreach($Connection in $Connections)
+            {
+                if ($Connection.SessionId -eq $i)
+                {
+                    $ToProcess += $Connection
+                }
+            }
+        }
+        
+
+        foreach($Connection in $ToProcess)
+        {
+            $Scans =  InvokeNessusRestRequest -SessionObject $Connection -Path "/scans/$($ScanId)/stop" -Method 'Post'
+
+            if ($Scans)
+            {
+                $Scans
+            }
+        }
+    }
+    End
+    {
+    }
+}
+
+<#
+.Synopsis
+   Short description
+.DESCRIPTION
+   Long description
+.EXAMPLE
+   Example of how to use this cmdlet
+.EXAMPLE
+   Another example of how to use this cmdlet
+#>
+function Start-NessusScan
+{
+    [CmdletBinding()]
+    Param
+    (
+        # Nessus session Id
+        [Parameter(Mandatory=$true,
+                   Position=0,
+                   ValueFromPipelineByPropertyName=$true)]
+        [Alias('Index')]
+        [int32[]]
+        $SessionId = @(),
+
+        [Parameter(Mandatory=$true,
+                   Position=1,
+                   ValueFromPipelineByPropertyName=$true)]
+        [int32]
+        $ScanId,
+
+        [Parameter(Mandatory=$false,
+                   Position=2,
+                   ValueFromPipelineByPropertyName=$true)]
+        [string[]]
+        $AlternateTarget 
+    )
+
+    Begin
+    {
+    }
+    Process
+    {
+        $ToProcess = @()
+
+        foreach($i in $SessionId)
+        {
+            $Connections = $Global:NessusConn
+            
+            foreach($Connection in $Connections)
+            {
+                if ($Connection.SessionId -eq $i)
+                {
+                    $ToProcess += $Connection
+                }
+            }
+        }
+        $Params = @{}
+
+        if($AlternateTarget)
+        {
+            $Params.Add('alt_targets', $AlternateTarget -join ' ')
+        }
+
+        foreach($Connection in $ToProcess)
+        {
+            $Scans =  InvokeNessusRestRequest -SessionObject $Connection -Path "/scans/$($ScanId)/launch" -Method 'Post' -Parameter $Params
+
+            if ($Scans)
+            {
+                $Scans
+            }
+        }
+    }
+    End
+    {
+    }
+}
+
+
+<#
+.Synopsis
+   Short description
+.DESCRIPTION
+   Long description
+.EXAMPLE
+   Example of how to use this cmdlet
+.EXAMPLE
+   Another example of how to use this cmdlet
+#>
 function Get-NessusScan
 {
     [CmdletBinding()]
@@ -908,6 +1184,7 @@ function Export-NessusScan
         foreach($Connection in $ToProcess)
         {
             $path =  "/scans/$($ScanId)/export"
+            Write-Verbose -Message "Exporting scan with Id of $($ScanId) in $($Format) format."
             $FileID = InvokeNessusRestRequest -SessionObject $Connections -Path $path  -Method 'Post' -Parameter $ExportParams
             if ($FileID)
             {
@@ -917,6 +1194,7 @@ function Export-NessusScan
                     try
                     {
                         $FileStatus = InvokeNessusRestRequest -SessionObject $Connections -Path "/scans/$($ScanId)/export/$($FileID.file)/status"  -Method 'Get'
+                        Write-Verbose -Message "Status of export is $($FileStatus.status)"
                     }
                     catch
                     {
@@ -926,6 +1204,7 @@ function Export-NessusScan
                 }
                 if ($FileStatus.status -eq 'ready')
                 {
+                    Write-Verbose -Message "Downloading report to $($OutFile)"
                     InvokeNessusRestRequest -SessionObject $Connections -Path "/scans/$($ScanId)/export/$($FileID.file)/download" -Method 'Get' -OutFile $OutFile
                 }
             }
@@ -935,6 +1214,8 @@ function Export-NessusScan
     {
     }
 }
+
+
 #endregion
 
 #region Policy
@@ -1090,6 +1371,9 @@ function InvokeNessusRestRequest
                 $Results = Invoke-RestMethod @RestMethodParams
             }
         }
+        else
+        {
+            write-error -ErrorRecord $_        }
     }
     $Results
 }
