@@ -98,7 +98,7 @@ function New-NessusSession
                 $SessionProps.Add('Credentials',$Credentials)
                 $SessionProps.add('Token',$TokenResponse.token)
                 $SessionIndex = $Global:NessusConn.Count
-                $SessionProps.Add('Id', $SessionIndex)
+                $SessionProps.Add('SessionId', $SessionIndex)
                 $sessionobj = New-Object -TypeName psobject -Property $SessionProps
                 $sessionobj.pstypenames[0] = 'Nessus.Session'
                 
@@ -132,12 +132,7 @@ function New-NessusSession
     Token : 2683f239b257c7729a9b501a2b916c7022a730d20b536c12
 
 .EXAMPLE
-    Get-NessusSession -Id 1
-
-
-    Id    : 0
-    URI   : https://192.168.1.205:8834
-    Token : 50168808199c1a2197d180fa62fb9cc3cb9108054911476a
+    Get-NessusSession -SessionId 1
 
     Id    : 1
     URI   : https://192.168.1.205:8834
@@ -154,7 +149,7 @@ function Get-NessusSession
                    Position=0)]
         [Alias('Index')]
         [int32[]]
-        $Id = @()
+        $SessionId = @()
     )
 
     Begin{}
@@ -162,11 +157,11 @@ function Get-NessusSession
     {
         if ($Index.Count -gt 0)
         {
-            foreach($i in $Id)
+            foreach($i in $SessionId)
             {
                 foreach($Connection in $Global:NessusConn)
                 {
-                    if ($Connection.Index -eq $i)
+                    if ($Connection.SessionId -eq $i)
                     {
                         $Connection
                     }
@@ -210,7 +205,7 @@ function Remove-NessusSession
                    ValueFromPipelineByPropertyName=$true)]
         [Alias('Index')]
         [int32[]]
-        $Id = @()
+        $SessionId = @()
     )
 
     Begin{}
@@ -224,13 +219,13 @@ function Remove-NessusSession
         
         if ($Id.Count -gt 0)
         {
-            foreach($i in $Id)
+            foreach($i in $SessionId)
             {
                 Write-Verbose -Message "Removing server session $($i)"
                 
                 foreach($Connection in $connections)
                 {
-                    if ($Connection.Id -eq $i)
+                    if ($Connection.SessionId -eq $i)
                     {
                         [void]$toremove.Add($Connection)
                     }
@@ -268,7 +263,7 @@ function Remove-NessusSession
 .DESCRIPTION
    Get detailed information on one or more Nessus Sessions.
 .EXAMPLE
-    Get-NessusSessionInfo -Id 0 -Verbose
+    Get-NessusSessionInfo -SessionId 0 -Verbose
     VERBOSE: Removing server session 0
     VERBOSE: GET https://192.168.1.205:8834/session with 0-byte payload
     VERBOSE: received 196-byte response of content type application/json
@@ -296,7 +291,7 @@ function Get-NessusSessionInfo
                    Position=0,
                    ValueFromPipelineByPropertyName=$true)]
         [Alias('Index')]
-        [int32[]]$Id = @()
+        [int32[]]$SessionId = @()
     )
 
     Begin
@@ -307,13 +302,13 @@ function Get-NessusSessionInfo
         $connections = $Global:NessusConn
         $ToProcess = New-Object -TypeName System.Collections.ArrayList
 
-        foreach($i in $Id)
+        foreach($i in $SessionId)
         {
             Write-Verbose "Removing server session $($i)"
                 
             foreach($Connection in $connections)
             {
-                if ($Connection.Id -eq $i)
+                if ($Connection.SessionId -eq $i)
                 {
                     [void]$ToProcess.Add($Connection)
                 }
@@ -346,7 +341,7 @@ function Get-NessusSessionInfo
 .DESCRIPTION
    Get information on a Nessus Server for a given session.
 .EXAMPLE
-    Get-NessusServerInfo -Id 0 -Verbose
+    Get-NessusServerInfo -SessionId 0 -Verbose
     VERBOSE: GET https://192.168.1.205:8834/server/properties with 0-byte payload
     VERBOSE: received 478-byte response of content type application/json
 
@@ -376,7 +371,7 @@ function Get-NessusServerInfo
                    Position=0,
                    ValueFromPipelineByPropertyName=$true)]
         [Alias('Index')]
-        [int32[]]$Id = @()
+        [int32[]]$SessionId = @()
     )
 
     Begin
@@ -386,13 +381,13 @@ function Get-NessusServerInfo
     {
         $ToProcess = @()
 
-        foreach($i in $Id)
+        foreach($i in $SessionId)
         {
             $Connections = $Global:NessusConn
             
             foreach($Connection in $Connections)
             {
-                if ($Connection.Id -eq $i)
+                if ($Connection.SessionId -eq $i)
                 {
                     $ToProcess += $Connection
                 }
@@ -439,7 +434,7 @@ function Get-NessusServerStatus
                    ValueFromPipelineByPropertyName=$true)]
         [Alias('Index')]
         [int32[]]
-        $Id = @()
+        $SessionId = @()
     )
 
     Begin
@@ -449,13 +444,13 @@ function Get-NessusServerStatus
     {
         $ToProcess = @()
 
-        foreach($i in $Id)
+        foreach($i in $SessionId)
         {
             $Connections = $Global:NessusConn
             
             foreach($Connection in $Connections)
             {
-                if ($Connection.Id -eq $i)
+                if ($Connection.SessionId -eq $i)
                 {
                     $ToProcess += $Connection
                 }
@@ -489,7 +484,7 @@ function Get-NessusServerStatus
 .DESCRIPTION
    Get a information about the Nessus User for a Session.
 .EXAMPLE
-    Get-NessusUser -Id 0 -Verbose
+    Get-NessusUser -SessionId 0 -Verbose
     VERBOSE: GET https://192.168.1.205:8834/users with 0-byte payload
     VERBOSE: received 125-byte response of content type application/json
 
@@ -513,7 +508,7 @@ function Get-NessusUser
                    ValueFromPipelineByPropertyName=$true)]
         [Alias('Index')]
         [int32[]]
-        $Id = @()
+        $SessionId = @()
     )
 
     Begin
@@ -524,13 +519,13 @@ function Get-NessusUser
     {
         $ToProcess = @()
 
-        foreach($i in $Id)
+        foreach($i in $SessionId)
         {
             $Connections = $Global:NessusConn
             
             foreach($Connection in $Connections)
             {
-                if ($Connection.Id -eq $i)
+                if ($Connection.SessionId -eq $i)
                 {
                     $ToProcess += $Connection
                 }
@@ -755,7 +750,7 @@ function Get-NessusScan
                    ValueFromPipelineByPropertyName=$true)]
         [Alias('Index')]
         [int32[]]
-        $Id = @(),
+        $SessionId = @(),
 
         [Parameter(Mandatory=$false,
                    Position=1,
@@ -771,13 +766,13 @@ function Get-NessusScan
     {
         $ToProcess = @()
 
-        foreach($i in $Id)
+        foreach($i in $SessionId)
         {
             $Connections = $Global:NessusConn
             
             foreach($Connection in $Connections)
             {
-                if ($Connection.Id -eq $i)
+                if ($Connection.SessionId -eq $i)
                 {
                     $ToProcess += $Connection
                 }
@@ -830,7 +825,7 @@ function Export-NessusScan
                    ValueFromPipelineByPropertyName=$true)]
         [Alias('Index')]
         [int32[]]
-        $Id = @(),
+        $SessionId = @(),
 
         [Parameter(Mandatory=$true,
                    Position=1,
@@ -879,13 +874,13 @@ function Export-NessusScan
     {
         $ToProcess = @()
 
-        foreach($i in $Id)
+        foreach($i in $SessionId)
         {
             $Connections = $Global:NessusConn
             
             foreach($Connection in $Connections)
             {
-                if ($Connection.Id -eq $i)
+                if ($Connection.SessionId -eq $i)
                 {
                     $ToProcess += $Connection
                 }
@@ -1017,7 +1012,7 @@ function InvokeNessusRestRequest
                 $SessionProps.add('URI', $SessionObject.URI)
                 $SessionProps.Add('Credentials',$SessionObject.Credentials)
                 $SessionProps.add('Token',$TokenResponse.token)
-                $SessionProps.Add('Id', $SessionObject.Id)
+                $SessionProps.Add('SessionId', $SessionObject.SessionId)
                 $Sessionobj = New-Object -TypeName psobject -Property $SessionProps
                 $Sessionobj.pstypenames[0] = 'Nessus.Session'
                 [void]$Global:NessusConn.Remove($SessionObject)
