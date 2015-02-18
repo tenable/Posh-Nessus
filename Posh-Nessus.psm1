@@ -17,6 +17,8 @@
     'Sysadmin' = 128
  }
 
+#region Session
+
 <#
 .Synopsis
    Create a new Nessus Session.
@@ -331,8 +333,9 @@ function Get-NessusSessionInfo
     }
 }
 
+#endregion
 
-# Server
+#region Server
 ####################################################################
 
 <#
@@ -474,8 +477,9 @@ function Get-NessusServerStatus
     }
 }
 
+#endregion
 
-# USER
+#region User
 ####################################################################
 
 <#
@@ -661,6 +665,7 @@ function New-NessusUser
     End{}
 }
 
+#endregion
 
 #region Folders
 ####################################################################
@@ -686,7 +691,7 @@ function Get-NessusFolder
                    ValueFromPipelineByPropertyName=$true)]
         [Alias('Index')]
         [int32[]]
-        $Id = @()
+        $SessionId = @()
     )
 
     Begin
@@ -696,13 +701,13 @@ function Get-NessusFolder
     {
         $ToProcess = @()
 
-        foreach($i in $Id)
+        foreach($i in $SessionId)
         {
             $Connections = $Global:NessusConn
             
             foreach($Connection in $Connections)
             {
-                if ($Connection.Id -eq $i)
+                if ($Connection.SessionId -eq $i)
                 {
                     $ToProcess += $Connection
                 }
@@ -923,6 +928,68 @@ function Export-NessusScan
                 {
                     InvokeNessusRestRequest -SessionObject $Connections -Path "/scans/$($ScanId)/export/$($FileID.file)/download" -Method 'Get' -OutFile $OutFile
                 }
+            }
+        }
+    }
+    End
+    {
+    }
+}
+#endregion
+
+#region Policy
+
+<#
+.Synopsis
+   Short description
+.DESCRIPTION
+   Long description
+.EXAMPLE
+   Example of how to use this cmdlet
+.EXAMPLE
+   Another example of how to use this cmdlet
+#>
+function Get-NessusPolicy
+{
+    [CmdletBinding()]
+    Param
+    (
+        # Nessus session Id
+        [Parameter(Mandatory=$true,
+                   Position=0,
+                   ValueFromPipelineByPropertyName=$true)]
+        [Alias('Index')]
+        [int32[]]
+        $SessionId = @()
+    )
+
+    Begin
+    {
+    }
+    Process
+    {
+        $ToProcess = @()
+
+        foreach($i in $SessionId)
+        {
+            $Connections = $Global:NessusConn
+            
+            foreach($Connection in $Connections)
+            {
+                if ($Connection.SessionId -eq $i)
+                {
+                    $ToProcess += $Connection
+                }
+            }
+        }
+
+        foreach($Connection in $ToProcess)
+        {
+            $Policies =  InvokeNessusRestRequest -SessionObject $Connection -Path '/policies' -Method 'Get'
+
+            if ($Policies)
+            {
+                $Policies.policies
             }
         }
     }

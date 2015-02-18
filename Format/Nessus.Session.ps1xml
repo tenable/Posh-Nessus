@@ -11,8 +11,8 @@
             <ListEntry>
                 <ListItems>
                     <ListItem> 
-                        <Label>Id</Label>
-                        <PropertyName>Id</PropertyName>
+                        <Label>SessionId</Label>
+                        <PropertyName>SessionId</PropertyName>
                     </ListItem>
                     <ListItem>
                         <Label>URI</Label>
