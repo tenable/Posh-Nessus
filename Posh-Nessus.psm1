@@ -1663,28 +1663,33 @@ function Import-NessusScan
         {
             $fileinfo = Get-ItemProperty -Path $File
             $req = [System.Net.WebRequest]::Create("$($Connection.uri)/file/upload")
-
-            #$req.Headers = $headers
             $req.Method = 'POST'
             $req.AllowWriteStreamBuffering = $true
             $req.SendChunked = $false
             $req.KeepAlive = $true
+            
 
             # Set the proper headers.
             $headers = New-Object -TypeName System.Net.WebHeaderCollection
-
+            $req.Headers = $headers
             # Prep the POST Headers for the message
             $req.Headers.Add('X-Cookie',"token=$($connection.token)")
+            $req.Headers.Add('X-Requested-With','XMLHttpRequest')
+            $req.UserAgent = "Mozilla/5.0 (Windows NT 6.3; WOW64; Trident/7.0; Touch; rv:11.0) like Gecko')"
             $boundary = '----------------------------' + [DateTime]::Now.Ticks.ToString('x')
             $req.ContentType = 'multipart/form-data; boundary=' + $boundary
-            [byte[]]$boundarybytes = [System.Text.Encoding]::ASCII.GetBytes("`r`n--" + $boundary + "`r`n")
-            [string]$formdataTemplate = "`r`n--" + $boundary + "`r`nContent-Disposition: form-data; name=`"{0}`";`r`n`r`n{1}"
+            [byte[]]$boundarybytes = [System.Text.Encoding]::ASCII.GetBytes('--' + $boundary + "`r`n")
+            [string]$formdataTemplate = '--' + $boundary 
             [string]$formitem = [string]::Format($formdataTemplate, 'Filename', $fileinfo.name)
             [byte[]]$formitembytes = [System.Text.Encoding]::UTF8.GetBytes($formitem)
-            [string]$headerTemplate = "Content-Disposition: form-data; name=`"{0}`"; filename=`"{1}`"`r`nContent-Type: application/octet-stream`r`n`r`n"
-            [string]$header = [string]::Format($headerTemplate, 'file', (get-item $file).name)
+            
+            # Headder
+            [string]$headerTemplate = "Content-Disposition: form-data; name=`"{0}`"; filename=`"{1}`"`r`nContent-Type: text/plain`r`n`r`n"
+            [string]$header = [string]::Format($headerTemplate, 'filedata', (get-item $file).name)
             [byte[]]$headerbytes = [System.Text.Encoding]::UTF8.GetBytes($header)
-            [string]$footerTemplate = "Content-Disposition: form-data; name=`"Upload`"`r`n`r`nSubmit Query`r`n" + $boundary + '--'
+
+            # Footer
+            [string]$footerTemplate = "`r`n" + $boundary + '--'
             [byte[]]$footerBytes = [System.Text.Encoding]::UTF8.GetBytes($footerTemplate)
 
 
@@ -1693,7 +1698,6 @@ function Import-NessusScan
             $rdr = new-object System.IO.FileStream($fileinfo.FullName, [System.IO.FileMode]::Open, [System.IO.FileAccess]::Read)
             [byte[]]$buffer = new-object byte[] $rdr.Length
             [int]$total = [int]$count = 0
-            $stream.Write($formitembytes, 0, $formitembytes.Length)
             $stream.Write($boundarybytes, 0, $boundarybytes.Length)
             $stream.Write($headerbytes, 0,$headerbytes.Length)
             $count = $rdr.Read($buffer, 0, $buffer.Length)
@@ -1701,11 +1705,12 @@ function Import-NessusScan
                 $stream.Write($buffer, 0, $count)
                 $count = $rdr.Read($buffer, 0, $buffer.Length)
             }while ($count > 0)
-            $stream.Write($boundarybytes, 0, $boundarybytes.Length)
+            #$stream.Write($boundarybytes, 0, $boundarybytes.Length)
             $stream.Write($footerBytes, 0, $footerBytes.Length)
             $stream.close()
 
-            
+            try
+            {
                 # Upload the file
                 $response = $req.GetResponse()
 
@@ -1714,6 +1719,11 @@ function Import-NessusScan
                 $sr = new-object System.IO.StreamReader $respstream
                 $result = $sr.ReadToEnd()
                 ConvertFrom-Json $result
+           }
+           catch
+           {
+                $_
+           }
             
         }
     }
