@@ -1216,10 +1216,252 @@ function Export-NessusScan
 }
 
 
+<#
+.Synopsis
+   Short description
+.DESCRIPTION
+   Long description
+.EXAMPLE
+   Example of how to use this cmdlet
+.EXAMPLE
+   Another example of how to use this cmdlet
+#>
+function Show-NessusScanDetail
+{
+    [CmdletBinding()]
+    Param
+    (
+        # Nessus session Id
+        [Parameter(Mandatory=$true,
+                   Position=0,
+                   ValueFromPipelineByPropertyName=$true)]
+        [Alias('Index')]
+        [int32[]]
+        $SessionId = @(),
+
+        [Parameter(Mandatory=$true,
+                   Position=1,
+                   ValueFromPipelineByPropertyName=$true)]
+        [int32]
+        $ScanId,
+
+        [Parameter(Mandatory=$false,
+                   Position=2,
+                   ValueFromPipelineByPropertyName=$true)]
+        [Int32]
+        $HistoryId 
+    )
+
+    Begin{}
+    Process
+    {
+        $ToProcess = @()
+
+        foreach($i in $SessionId)
+        {
+            $Connections = $Global:NessusConn
+            
+            foreach($Connection in $Connections)
+            {
+                if ($Connection.SessionId -eq $i)
+                {
+                    $ToProcess += $Connection
+                }
+            }
+        }
+        $Params = @{}
+
+        if($HistoryId)
+        {
+            $Params.Add('history_id', $HistoryId)
+        }
+
+        foreach($Connection in $ToProcess)
+        {
+            $ScanDetails =  InvokeNessusRestRequest -SessionObject $Connection -Path "/scans/$($ScanId)" -Method 'Get' -Parameter $Params
+
+            if ($ScanDetails)
+            {
+                $ScanDetails
+            }
+        }
+    }
+    End{}
+}
+
+<#
+.Synopsis
+   Short description
+.DESCRIPTION
+   Long description
+.EXAMPLE
+   Example of how to use this cmdlet
+.EXAMPLE
+   Another example of how to use this cmdlet
+#>
+function Show-NessusScanHost
+{
+    [CmdletBinding()]
+    Param
+    (
+        # Nessus session Id
+        [Parameter(Mandatory=$true,
+                   Position=0,
+                   ValueFromPipelineByPropertyName=$true)]
+        [Alias('Index')]
+        [int32[]]
+        $SessionId = @(),
+
+        [Parameter(Mandatory=$true,
+                   Position=1,
+                   ValueFromPipelineByPropertyName=$true)]
+        [int32]
+        $ScanId,
+
+        [Parameter(Mandatory=$false,
+                   Position=2,
+                   ValueFromPipelineByPropertyName=$true)]
+        [Int32]
+        $HistoryId 
+    )
+
+    Begin{}
+    Process
+    {
+        $ToProcess = @()
+
+        foreach($i in $SessionId)
+        {
+            $Connections = $Global:NessusConn
+            
+            foreach($Connection in $Connections)
+            {
+                if ($Connection.SessionId -eq $i)
+                {
+                    $ToProcess += $Connection
+                }
+            }
+        }
+        $Params = @{}
+
+        if($HistoryId)
+        {
+            $Params.Add('history_id', $HistoryId)
+        }
+
+        foreach($Connection in $ToProcess)
+        {
+            $ScanDetails =  InvokeNessusRestRequest -SessionObject $Connection -Path "/scans/$($ScanId)" -Method 'Get' -Parameter $Params
+
+            if ($ScanDetails)
+            {
+                foreach ($Host in $ScanDetails.hosts)
+                {
+                    $HostProps = [ordered]@{}
+                    $HostProps.Add('HostName', $Host.hostname)
+                    $HostProps.Add('HostId', $Host.host_id)
+                    $HostProps.Add('Critical', $Host.critical)
+                    $HostProps.Add('High',  $Host.high)
+                    $HostProps.Add('Medium', $Host.medium)
+                    $HostProps.Add('Low', $Host.low)
+                    $HostProps.Add('Info', $Host.info)
+                    $HostObj = New-Object -TypeName psobject -Property $HostProps
+                    $HostObj.pstypenames[0] = 'Nessus.Scan.Host'
+                    $HostObj
+                } 
+            }
+        }
+    }
+    End{}
+}
+
+
+<#
+.Synopsis
+   Short description
+.DESCRIPTION
+   Long description
+.EXAMPLE
+   Example of how to use this cmdlet
+.EXAMPLE
+   Another example of how to use this cmdlet
+#>
+function Show-NessusScanHistory
+{
+    [CmdletBinding()]
+    Param
+    (
+        # Nessus session Id
+        [Parameter(Mandatory=$true,
+                   Position=0,
+                   ValueFromPipelineByPropertyName=$true)]
+        [Alias('Index')]
+        [int32[]]
+        $SessionId = @(),
+
+        [Parameter(Mandatory=$true,
+                   Position=1,
+                   ValueFromPipelineByPropertyName=$true)]
+        [int32]
+        $ScanId
+    )
+
+    Begin
+    {
+        $origin = New-Object -Type DateTime -ArgumentList 1970, 1, 1, 0, 0, 0, 0
+    }
+    Process
+    {
+        $ToProcess = @()
+
+        foreach($i in $SessionId)
+        {
+            $Connections = $Global:NessusConn
+            
+            foreach($Connection in $Connections)
+            {
+                if ($Connection.SessionId -eq $i)
+                {
+                    $ToProcess += $Connection
+                }
+            }
+        }
+        $Params = @{}
+
+        if($HistoryId)
+        {
+            $Params.Add('history_id', $HistoryId)
+        }
+
+        foreach($Connection in $ToProcess)
+        {
+            $ScanDetails =  InvokeNessusRestRequest -SessionObject $Connection -Path "/scans/$($ScanId)" -Method 'Get' -Parameter $Params
+
+            if ($ScanDetails)
+            {
+                foreach ($History in $ScanDetails.history)
+                {
+                    $HistoryProps = [ordered]@{}
+                    $HistoryProps['HistoryId'] = $History.history_id
+                    $HistoryProps['UUID'] = $History.uuid
+                    $HistoryProps['Status'] = $History.status
+                    $HistoryProps['Type'] = $History.type
+                    $HistoryProps['CreationDate'] = $origin.AddSeconds($History.creation_date).ToLocalTime()
+                    $HistoryProps['LastModifiedDate'] = $origin.AddSeconds($History.last_modification_date).ToLocalTime()
+                    $HistObj = New-Object -TypeName psobject -Property $HistoryProps
+                    $HistObj.pstypenames[0] = 'Nessus.Scan.History'
+                    $HistObj
+                } 
+            }
+        }
+    }
+    End{}
+}
+
 #endregion
 
 #region Policy
-
+##################################
 <#
 .Synopsis
    Short description
