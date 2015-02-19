@@ -764,9 +764,7 @@ function Suspend-NessusScan
         $ScanId 
     )
 
-    Begin
-    {
-    }
+    Begin{}
     Process
     {
         $ToProcess = @()
@@ -794,9 +792,7 @@ function Suspend-NessusScan
             }
         }
     }
-    End
-    {
-    }
+    End{}
 }
 
 
@@ -866,6 +862,7 @@ function Resume-NessusScan
     }
 }
 
+
 <#
 .Synopsis
    Short description
@@ -931,6 +928,7 @@ function Stop-NessusScan
     {
     }
 }
+
 
 <#
 .Synopsis
@@ -1375,6 +1373,7 @@ function Show-NessusScanHostDetail
     End{}
 }
 
+
 <#
 .Synopsis
    Short description
@@ -1544,10 +1543,187 @@ function Show-NessusScanHistory
     End{}
 }
 
+
+<#
+.Synopsis
+   Short description
+.DESCRIPTION
+   Long description
+.EXAMPLE
+   Example of how to use this cmdlet
+.EXAMPLE
+   Another example of how to use this cmdlet
+#>
+function Remove-NessusScan
+{
+    [CmdletBinding()]
+    Param
+    (
+        # Nessus session Id
+        [Parameter(Mandatory=$true,
+                   Position=0,
+                   ValueFromPipelineByPropertyName=$true)]
+        [Alias('Index')]
+        [int32[]]
+        $SessionId = @(),
+
+        [Parameter(Mandatory=$true,
+                   Position=1,
+                   ValueFromPipelineByPropertyName=$true)]
+        [int32]
+        $ScanId
+    )
+
+    Begin{}
+    Process
+    {
+        $ToProcess = @()
+
+        foreach($i in $SessionId)
+        {
+            $Connections = $Global:NessusConn
+            
+            foreach($Connection in $Connections)
+            {
+                if ($Connection.SessionId -eq $i)
+                {
+                    $ToProcess += $Connection
+                }
+            }
+        }
+
+        foreach($Connection in $ToProcess)
+        {
+            Write-Verbose -Message "Removing scan with Id $($ScanId)"
+            
+            $ScanDetails =  InvokeNessusRestRequest -SessionObject $Connection -Path "/scans/$($ScanId)" -Method 'Delete' -Parameter $Params
+            if ($ScanDetails -eq 'null')
+            {
+                Write-Verbose -Message 'Scan Removed'
+            }
+            
+            
+        }
+    }
+    End{}
+}
+
+
+<#
+.Synopsis
+   Short description
+.DESCRIPTION
+   Long description
+.EXAMPLE
+   Example of how to use this cmdlet
+.EXAMPLE
+   Another example of how to use this cmdlet
+#>
+function Import-NessusScan
+{
+    [CmdletBinding()]
+    [OutputType([int])]
+    Param
+    (
+        # Nessus session Id
+        [Parameter(Mandatory=$true,
+                   Position=0,
+                   ValueFromPipelineByPropertyName=$true)]
+        [Alias('Index')]
+        [int32[]]
+        $SessionId = @(),
+
+        [Parameter(Mandatory=$true,
+                   Position=0,
+                   ValueFromPipelineByPropertyName=$true)]
+        [ValidateScript({Test-Path -Path $_})]
+        [string]
+        $File
+    )
+
+    Begin{}
+    Process
+    {
+        $ToProcess = @()
+
+        foreach($i in $SessionId)
+        {
+            $Connections = $Global:NessusConn
+            
+            foreach($Connection in $Connections)
+            {
+                if ($Connection.SessionId -eq $i)
+                {
+                    $ToProcess += $Connection
+                }
+            }
+        }
+
+        foreach($Connection in $ToProcess)
+        {
+            $fileinfo = Get-ItemProperty -Path $File
+            $req = [System.Net.WebRequest]::Create("$($Connection.uri)/file/upload")
+
+            #$req.Headers = $headers
+            $req.Method = 'POST'
+            $req.AllowWriteStreamBuffering = $true
+            $req.SendChunked = $false
+            $req.KeepAlive = $true
+
+            # Set the proper headers.
+            $headers = New-Object -TypeName System.Net.WebHeaderCollection
+
+            # Prep the POST Headers for the message
+            $req.Headers.Add('X-Cookie',"token=$($connection.token)")
+            $boundary = '----------------------------' + [DateTime]::Now.Ticks.ToString('x')
+            $req.ContentType = 'multipart/form-data; boundary=' + $boundary
+            [byte[]]$boundarybytes = [System.Text.Encoding]::ASCII.GetBytes("`r`n--" + $boundary + "`r`n")
+            [string]$formdataTemplate = "`r`n--" + $boundary + "`r`nContent-Disposition: form-data; name=`"{0}`";`r`n`r`n{1}"
+            [string]$formitem = [string]::Format($formdataTemplate, 'Filename', $fileinfo.name)
+            [byte[]]$formitembytes = [System.Text.Encoding]::UTF8.GetBytes($formitem)
+            [string]$headerTemplate = "Content-Disposition: form-data; name=`"{0}`"; filename=`"{1}`"`r`nContent-Type: application/octet-stream`r`n`r`n"
+            [string]$header = [string]::Format($headerTemplate, 'file', (get-item $file).name)
+            [byte[]]$headerbytes = [System.Text.Encoding]::UTF8.GetBytes($header)
+            [string]$footerTemplate = "Content-Disposition: form-data; name=`"Upload`"`r`n`r`nSubmit Query`r`n" + $boundary + '--'
+            [byte[]]$footerBytes = [System.Text.Encoding]::UTF8.GetBytes($footerTemplate)
+
+
+            # Read the file and format the message
+            $stream = $req.GetRequestStream()
+            $rdr = new-object System.IO.FileStream($fileinfo.FullName, [System.IO.FileMode]::Open, [System.IO.FileAccess]::Read)
+            [byte[]]$buffer = new-object byte[] $rdr.Length
+            [int]$total = [int]$count = 0
+            $stream.Write($formitembytes, 0, $formitembytes.Length)
+            $stream.Write($boundarybytes, 0, $boundarybytes.Length)
+            $stream.Write($headerbytes, 0,$headerbytes.Length)
+            $count = $rdr.Read($buffer, 0, $buffer.Length)
+            do{
+                $stream.Write($buffer, 0, $count)
+                $count = $rdr.Read($buffer, 0, $buffer.Length)
+            }while ($count > 0)
+            $stream.Write($boundarybytes, 0, $boundarybytes.Length)
+            $stream.Write($footerBytes, 0, $footerBytes.Length)
+            $stream.close()
+
+            
+                # Upload the file
+                $response = $req.GetResponse()
+
+                # Read the response
+                $respstream = $response.GetResponseStream()
+                $sr = new-object System.IO.StreamReader $respstream
+                $result = $sr.ReadToEnd()
+                ConvertFrom-Json $result
+            
+        }
+    }
+    End{}
+}
 #endregion
 
 #region Policy
 ##################################
+
 <#
 .Synopsis
    Short description
@@ -1629,9 +1805,17 @@ function InvokeNessusRestRequest
         [String]$Method,
 
         [Parameter(Mandatory=$false)]
-        [String]$OutFile
+        [String]$OutFile,
+
+        [Parameter(Mandatory=$false)]
+        [String]$ContentType,
+
+        [Parameter(Mandatory=$false)]
+        [String]$InFile
 
     )
+
+    
 
     $RestMethodParams = @{
         'Method'        = $Method
@@ -1649,6 +1833,17 @@ function InvokeNessusRestRequest
     {
         $RestMethodParams.add('OutFile', $OutFile)
     }
+
+    if($ContentType)
+    {
+        $RestMethodParams.add('ContentType', $ContentType)
+    }
+
+    if($InFile)
+    {
+        $RestMethodParams.add('InFile', $InFile)
+    }
+
     try
     {
         #$RestMethodParams.Uri
@@ -1701,7 +1896,9 @@ function InvokeNessusRestRequest
         }
         else
         {
-            write-error -ErrorRecord $_        }
+            write-error -ErrorRecord $_ 
+        }
     }
     $Results
 }
+
