@@ -1,0 +1,31 @@
+﻿<?xml version="1.0" encoding="utf-16"?>
+<Configuration>
+<ViewDefinitions>
+<View>
+    <Name>Nessus.Scan.HostDetails</Name>
+    <ViewSelectedBy>
+        <TypeName>Nessus.Scan.HostDetails</TypeName>
+    </ViewSelectedBy>
+    <ListControl>
+        <ListEntries>
+            <ListEntry>
+                <ListItems>
+                    <ListItem> 
+                        <Label>Info</Label>
+                        <PropertyName>Info</PropertyName>
+                    </ListItem>
+                    <ListItem>
+                        <Label>Vulnerabilities</Label>
+                        <PropertyName>Vulnerabilities</PropertyName>
+                    </ListItem>
+                    <ListItem>
+                        <Label>Info</Label>
+                        <PropertyName>Info</PropertyName>
+                    </ListItem>
+                    </ListItems>
+            </ListEntry>
+        </ListEntries>
+    </ListControl>
+</View>
+</ViewDefinitions>
+</Configuration>
