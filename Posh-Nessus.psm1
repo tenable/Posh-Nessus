@@ -1634,14 +1634,32 @@ function Import-NessusScan
         $SessionId = @(),
 
         [Parameter(Mandatory=$true,
-                   Position=0,
+                   Position=1,
                    ValueFromPipelineByPropertyName=$true)]
         [ValidateScript({Test-Path -Path $_})]
         [string]
-        $File
+        $File,
+
+        [Parameter(Mandatory=$false,
+                   Position=2,
+                   ValueFromPipelineByPropertyName=$true)]
+        [switch]
+        $Encrypted
     )
 
-    Begin{}
+    Begin
+    {
+        if($Encrypted)
+        {
+            $ContentType = 'application/octet-stream'
+            $URIPath = '/file/upload?no_enc=1'
+        }
+        else
+        {
+            $ContentType = 'text/plain'
+            $URIPath = '/file/upload'
+        }
+    }
     Process
     {
         $ToProcess = @()
@@ -1662,7 +1680,7 @@ function Import-NessusScan
         foreach($Connection in $ToProcess)
         {
             $fileinfo = Get-ItemProperty -Path $File
-            $req = [System.Net.WebRequest]::Create("$($Connection.uri)/file/upload")
+            $req = [System.Net.WebRequest]::Create("$($Connection.uri)$($URIPath)")
             $req.Method = 'POST'
             $req.AllowWriteStreamBuffering = $true
             $req.SendChunked = $false
@@ -1675,6 +1693,8 @@ function Import-NessusScan
             # Prep the POST Headers for the message
             $req.Headers.Add('X-Cookie',"token=$($connection.token)")
             $req.Headers.Add('X-Requested-With','XMLHttpRequest')
+            $req.Headers.Add('Accept-Language: en-US')
+            $req.Headers.Add('Accept-Encoding: gzip,deflate')
             $req.UserAgent = "Mozilla/5.0 (Windows NT 6.3; WOW64; Trident/7.0; Touch; rv:11.0) like Gecko')"
             $boundary = '----------------------------' + [DateTime]::Now.Ticks.ToString('x')
             $req.ContentType = 'multipart/form-data; boundary=' + $boundary
@@ -1684,8 +1704,8 @@ function Import-NessusScan
             [byte[]]$formitembytes = [System.Text.Encoding]::UTF8.GetBytes($formitem)
             
             # Headder
-            [string]$headerTemplate = "Content-Disposition: form-data; name=`"{0}`"; filename=`"{1}`"`r`nContent-Type: text/plain`r`n`r`n"
-            [string]$header = [string]::Format($headerTemplate, 'filedata', (get-item $file).name)
+            [string]$headerTemplate = "Content-Disposition: form-data; name=`"{0}`"; filename=`"{1}`"`r`nContent-Type: $($ContentType)`r`n`r`n"
+            [string]$header = [string]::Format($headerTemplate, 'Filedata', (get-item $file).name)
             [byte[]]$headerbytes = [System.Text.Encoding]::UTF8.GetBytes($header)
 
             # Footer
@@ -1705,7 +1725,6 @@ function Import-NessusScan
                 $stream.Write($buffer, 0, $count)
                 $count = $rdr.Read($buffer, 0, $buffer.Length)
             }while ($count > 0)
-            #$stream.Write($boundarybytes, 0, $boundarybytes.Length)
             $stream.Write($footerBytes, 0, $footerBytes.Length)
             $stream.close()
 
@@ -1718,16 +1737,90 @@ function Import-NessusScan
                 $respstream = $response.GetResponseStream()
                 $sr = new-object System.IO.StreamReader $respstream
                 $result = $sr.ReadToEnd()
-                ConvertFrom-Json $result
+                $UploadName = ConvertFrom-Json -InputObject $result
            }
            catch
            {
-                $_
+                throw $_
            }
+
+
             
         }
     }
     End{}
+}
+
+<#
+.Synopsis
+   Short description
+.DESCRIPTION
+   Long description
+.EXAMPLE
+   Example of how to use this cmdlet
+.EXAMPLE
+   Another example of how to use this cmdlet
+#>
+function Get-NessusScanTemplate
+{
+    [CmdletBinding()]
+    Param
+    (
+        # Nessus session Id
+        [Parameter(Mandatory=$true,
+                   Position=0,
+                   ValueFromPipelineByPropertyName=$true)]
+        [Alias('Index')]
+        [int32[]]
+        $SessionId = @()
+
+    )
+
+    Begin
+    {
+    }
+    Process
+    {
+        $ToProcess = @()
+
+        foreach($i in $SessionId)
+        {
+            $Connections = $Global:NessusConn
+            
+            foreach($Connection in $Connections)
+            {
+                if ($Connection.SessionId -eq $i)
+                {
+                    $ToProcess += $Connection
+                }
+            }
+        }
+
+        foreach($Connection in $ToProcess)
+        {
+            $Templates =  InvokeNessusRestRequest -SessionObject $Connection -Path '/editor/scan/templates' -Method 'Get'
+
+            if ($Templates)
+            {
+                foreach($Template in $Templates.templates)
+                {
+                    $TmplProps = [ordered]@{}
+                    $TmplProps.add('Name', $Template.name)
+                    $TmplProps.add('Title', $Template.title)
+                    $TmplProps.add('Description', $Template.desc)
+                    $TmplProps.add('UUID', $Template.uuid)
+                    $TmplProps.add('CloudOnly', $Template.cloud_only)
+                    $TmplProps.add('SubscriptionOnly', $Template.subscription_only)
+                    $Tmplobj = New-Object -TypeName psobject -Property $TmplProps
+                    $Tmplobj.pstypenames[0] = 'Nessus.ScanTemplate'
+                    $Tmplobj
+                }
+            }
+        }
+    }
+    End
+    {
+    }
 }
 #endregion
 
@@ -1792,6 +1885,79 @@ function Get-NessusPolicy
     {
     }
 }
+
+<#
+.Synopsis
+   Short description
+.DESCRIPTION
+   Long description
+.EXAMPLE
+   Example of how to use this cmdlet
+.EXAMPLE
+   Another example of how to use this cmdlet
+#>
+function Get-NessusPolicyTemplate
+{
+    [CmdletBinding()]
+    Param
+    (
+        # Nessus session Id
+        [Parameter(Mandatory=$true,
+                   Position=0,
+                   ValueFromPipelineByPropertyName=$true)]
+        [Alias('Index')]
+        [int32[]]
+        $SessionId = @()
+
+    )
+
+    Begin
+    {
+    }
+    Process
+    {
+        $ToProcess = @()
+
+        foreach($i in $SessionId)
+        {
+            $Connections = $Global:NessusConn
+            
+            foreach($Connection in $Connections)
+            {
+                if ($Connection.SessionId -eq $i)
+                {
+                    $ToProcess += $Connection
+                }
+            }
+        }
+
+        foreach($Connection in $ToProcess)
+        {
+            $Templates =  InvokeNessusRestRequest -SessionObject $Connection -Path '/editor/policy/templates' -Method 'Get'
+
+            if ($Templates)
+            {
+                foreach($Template in $Templates.templates)
+                {
+                    $TmplProps = [ordered]@{}
+                    $TmplProps.add('Name', $Template.name)
+                    $TmplProps.add('Title', $Template.title)
+                    $TmplProps.add('Description', $Template.desc)
+                    $TmplProps.add('UUID', $Template.uuid)
+                    $TmplProps.add('CloudOnly', $Template.cloud_only)
+                    $TmplProps.add('SubscriptionOnly', $Template.subscription_only)
+                    $Tmplobj = New-Object -TypeName psobject -Property $TmplProps
+                    $Tmplobj.pstypenames[0] = 'Nessus.PolicyTemplate'
+                    $Tmplobj
+                }
+            }
+        }
+    }
+    End
+    {
+    }
+}
+
 #endregion
 
 # Supporting Functions
