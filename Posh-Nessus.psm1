@@ -323,20 +323,23 @@ function Get-NessusSessionInfo
                     'ErrorVariable' = 'NessusSessionError'
                 }
                 $SessInfo = Invoke-RestMethod @RestMethodParams
-                $SessionProps = [ordered]@{}
-                $SessionProps.Add('Id', $SessInfo.id)
-                $SessionProps.Add('Name', $SessInfo.name)
-                $SessionProps.Add('UserName', $SessInfo.UserName)
-                $SessionProps.Add('Email', $SessInfo.Email)
-                $SessionProps.Add('Type', $SessInfo.Type)
-                $SessionProps.Add('Permission', $PermissionsId2Name[$SessInfo.permissions])
-                $SessionProps.Add('LastLogin', $origin.AddSeconds($SessInfo.lastlogin).ToLocalTime())
-                $SessionProps.Add('Groups', $SessInfo.groups)
-                $SessionProps.Add('Connectors', $SessInfo.connectors)
+                if($SessInfo)
+                {
+                    $SessionProps = [ordered]@{}
+                    $SessionProps.Add('Id', $SessInfo.id)
+                    $SessionProps.Add('Name', $SessInfo.name)
+                    $SessionProps.Add('UserName', $SessInfo.UserName)
+                    $SessionProps.Add('Email', $SessInfo.Email)
+                    $SessionProps.Add('Type', $SessInfo.Type)
+                    $SessionProps.Add('Permission', $PermissionsId2Name[$SessInfo.permissions])
+                    $SessionProps.Add('LastLogin', $origin.AddSeconds($SessInfo.lastlogin).ToLocalTime())
+                    $SessionProps.Add('Groups', $SessInfo.groups)
+                    $SessionProps.Add('Connectors', $SessInfo.connectors)
 
-                $SessInfoObj = New-Object -TypeName psobject -Property $SessionProps
-                $SessInfoObj.pstypenames[0] = 'Nessus.SessionInfo'
-                $SessInfoObj
+                    $SessInfoObj = New-Object -TypeName psobject -Property $SessionProps
+                    $SessInfoObj.pstypenames[0] = 'Nessus.SessionInfo'
+                    $SessInfoObj
+                }
             }
         }
     }
@@ -389,6 +392,7 @@ function Get-NessusServerInfo
 
     Begin
     {
+        $origin = New-Object -Type DateTime -ArgumentList 1970, 1, 1, 0, 0, 0, 0
     }
     Process
     {
@@ -414,7 +418,19 @@ function Get-NessusServerInfo
                  
             if ($ServerInfo)
             {
-                $ServerInfo
+                $SrvInfoProp = [ordered]@{}
+                $SrvInfoProp.Add('NessusType', $ServerInfo.nessus_type)
+                $SrvInfoProp.Add('ServerVersion', $ServerInfo.server_version)
+                $SrvInfoProp.Add('UIVersion', $ServerInfo.nessus_ui_version)
+                $SrvInfoProp.Add('PluginSet', $ServerInfo.loaded_plugin_set)
+                $SrvInfoProp.Add('Feed', $ServerInfo.feed)
+                $SrvInfoProp.Add('FeedExpiration', $origin.AddSeconds($ServerInfo.expiration).ToLocalTime())
+                $SrvInfoProp.Add('Capabilities', $ServerInfo.capabilities)
+                $SrvInfoProp.Add('UUID', $ServerInfo.server_uuid)
+                $SrvInfoProp.Add('Update', $ServerInfo.update)
+                $SrvInfoObj = New-Object -TypeName psobject -Property $SrvInfoProp
+                $SrvInfoObj.pstypenames[0] = 'Nessus.ServerInfo'
+                $SrvInfoObj
             }
         }
     }
