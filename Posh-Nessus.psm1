@@ -245,7 +245,7 @@ function Remove-NessusSession
                     'ErrorAction' = 'SilentlyContinue'
                 }
                 $RemoveResponse = Invoke-RestMethod @RestMethodParams
-                if ($DisconnectError)
+                if ($DisconnectError -is [psobject])
                 {
                     Write-Verbose -Message "Session with Id $($connection.Id) seems to have expired."
                 }
@@ -323,7 +323,7 @@ function Get-NessusSessionInfo
                     'ErrorVariable' = 'NessusSessionError'
                 }
                 $SessInfo = Invoke-RestMethod @RestMethodParams
-                if($SessInfo)
+                if($SessInfo -is [psobject])
                 {
                     $SessionProps = [ordered]@{}
                     $SessionProps.Add('Id', $SessInfo.id)
@@ -416,7 +416,7 @@ function Get-NessusServerInfo
                 
             $ServerInfo = InvokeNessusRestRequest -SessionObject $Connection -Path '/server/properties' -Method 'Get'
                  
-            if ($ServerInfo)
+            if ($ServerInfo -is [psobject])
             {
                 $SrvInfoProp = [ordered]@{}
                 $SrvInfoProp.Add('NessusType', $ServerInfo.nessus_type)
@@ -491,7 +491,7 @@ function Get-NessusServerStatus
                 
             $ServerStatus = InvokeNessusRestRequest -SessionObject $Connection -Path '/server/status' -Method 'Get'
                  
-            if ($ServerStatus)
+            if ($ServerStatus -is [psobject])
             {
                 $ServerStatus.pstypenames[0] = 'Nessus.ServerStatus'
                 $ServerStatus
@@ -567,7 +567,7 @@ function Get-NessusUser
                 
             $Users = InvokeNessusRestRequest -SessionObject $Connection -Path '/users' -Method 'Get'
                  
-            if ($Users)
+            if ($Users  -is [psobject])
             {
                 $Users.users | ForEach-Object -Process {
                     $UserProperties = [ordered]@{}
@@ -592,13 +592,11 @@ function Get-NessusUser
 
 <#
 .Synopsis
-   Short description
+   Add a new user to a Nessus Server.
 .DESCRIPTION
-   Long description
+   Add a new user to a Nessus Server.
 .EXAMPLE
-   Example of how to use this cmdlet
-.EXAMPLE
-   Another example of how to use this cmdlet
+   New-NessusUser -SessionId 0 -Credential (Get-Credential) -Permission Sysadmin
 #>
 function New-NessusUser
 {
@@ -698,13 +696,29 @@ function New-NessusUser
 
 <#
 .Synopsis
-   Short description
+   Gets folders configured on a Nessus Server.
 .DESCRIPTION
-   Long description
+   Gets folders configured on a Nessus Server.
 .EXAMPLE
-   Example of how to use this cmdlet
-.EXAMPLE
-   Another example of how to use this cmdlet
+    Get-NessusFolder 0
+
+    Name    : My Scans
+    Id      : 2
+    Type    : main
+    Default : 1
+    Unread  : 5
+
+    Name    : Trash
+    Id      : 3
+    Type    : trash
+    Default : 0
+    Unread  : 
+
+    Name    : Test Folder 2
+    Id      : 10
+    Type    : custom
+    Default : 0
+    Unread  : 0
 #>
 function Get-NessusFolder
 {
@@ -744,9 +758,20 @@ function Get-NessusFolder
         {
             $Folders =  InvokeNessusRestRequest -SessionObject $Connection -Path '/folders' -Method 'Get'
 
-            if ($Folders)
+            if ($Folders -is [psobject])
             {
-                $Folders.folders
+                foreach ($folder in $Folders.folders)
+                {
+                    $FolderProps = [ordered]@{}
+                    $FolderProps.Add('Name', $folder.name)
+                    $FolderProps.Add('Id', $folder.id)
+                    $FolderProps.Add('Type', $folder.type)
+                    $FolderProps.Add('Default', $folder.default_tag)
+                    $FolderProps.Add('Unread', $folder.unread_count)
+                    $FolderObj = New-Object -TypeName psobject -Property $FolderProps
+                    $FolderObj.pstypenames[0] = 'Nessus.Folder'
+                    $FolderObj
+                }
             }
         }
     }
@@ -761,7 +786,7 @@ function Get-NessusFolder
 ####################################################################
 
 <#
-.Synopsis
+.Synops
    Short description
 .DESCRIPTION
    Long description
@@ -812,7 +837,7 @@ function Suspend-NessusScan
         {
             $Scans =  InvokeNessusRestRequest -SessionObject $Connection -Path "/scans/$($ScanId)/pause" -Method 'Post'
 
-            if ($Scans)
+            if ($Scans -is [psobject])
             {
                 $Scans
             }
@@ -877,7 +902,7 @@ function Resume-NessusScan
         {
             $Scans =  InvokeNessusRestRequest -SessionObject $Connection -Path "/scans/$($ScanId)/resume" -Method 'Post'
 
-            if ($Scans)
+            if ($Scans -is [psobject])
             {
                 $Scans
             }
@@ -944,7 +969,7 @@ function Stop-NessusScan
         {
             $Scans =  InvokeNessusRestRequest -SessionObject $Connection -Path "/scans/$($ScanId)/stop" -Method 'Post'
 
-            if ($Scans)
+            if ($Scans -is [psobject])
             {
                 $Scans
             }
@@ -1022,7 +1047,7 @@ function Start-NessusScan
         {
             $Scans =  InvokeNessusRestRequest -SessionObject $Connection -Path "/scans/$($ScanId)/launch" -Method 'Post' -Parameter $Params
 
-            if ($Scans)
+            if ($Scans -is [psobject])
             {
                 $Scans
             }
@@ -1094,7 +1119,7 @@ function Get-NessusScan
         {
             $Scans =  InvokeNessusRestRequest -SessionObject $Connection -Path '/scans' -Method 'Get' -Parameter $Params
 
-            if ($Scans)
+            if ($Scans -is [psobject])
             {
                 foreach ($scan in $Scans.scans)
                 {
@@ -1210,7 +1235,7 @@ function Export-NessusScan
             $path =  "/scans/$($ScanId)/export"
             Write-Verbose -Message "Exporting scan with Id of $($ScanId) in $($Format) format."
             $FileID = InvokeNessusRestRequest -SessionObject $Connections -Path $path  -Method 'Post' -Parameter $ExportParams
-            if ($FileID)
+            if ($FileID -is [psobject])
             {
                 $FileStatus = ''
                 while ($FileStatus.status -ne 'ready')
@@ -1304,7 +1329,7 @@ function Show-NessusScanDetail
         {
             $ScanDetails =  InvokeNessusRestRequest -SessionObject $Connection -Path "/scans/$($ScanId)" -Method 'Get' -Parameter $Params
 
-            if ($ScanDetails)
+            if ($ScanDetails -is [psobject])
             {
                 $ScanDetails
             }
@@ -1384,7 +1409,7 @@ function Show-NessusScanHostDetail
         {
             $ScanDetails =  InvokeNessusRestRequest -SessionObject $Connection -Path "/scans/$($ScanId)/hosts/$($HostId)" -Method 'Get' -Parameter $Params
 
-            if ($ScanDetails)
+            if ($ScanDetails -is [psobject])
             {                
                 $HostProps = [ordered]@{}
                 $HostProps.Add('Info', $ScanDetails.info)
@@ -1464,7 +1489,7 @@ function Show-NessusScanHost
         {
             $ScanDetails =  InvokeNessusRestRequest -SessionObject $Connection -Path "/scans/$($ScanId)" -Method 'Get' -Parameter $Params
 
-            if ($ScanDetails)
+            if ($ScanDetails -is [psobject])
             {
                 foreach ($Host in $ScanDetails.hosts)
                 {
@@ -1548,7 +1573,7 @@ function Show-NessusScanHistory
         {
             $ScanDetails =  InvokeNessusRestRequest -SessionObject $Connection -Path "/scans/$($ScanId)" -Method 'Get' -Parameter $Params
 
-            if ($ScanDetails)
+            if ($ScanDetails -is [psobject])
             {
                 foreach ($History in $ScanDetails.history)
                 {
@@ -1826,7 +1851,7 @@ function Get-NessusScanTemplate
         {
             $Templates =  InvokeNessusRestRequest -SessionObject $Connection -Path '/editor/scan/templates' -Method 'Get'
 
-            if ($Templates)
+            if ($Templates -is [psobject])
             {
                 foreach($Template in $Templates.templates)
                 {
@@ -1901,7 +1926,7 @@ function Get-NessusPolicy
         {
             $Policies =  InvokeNessusRestRequest -SessionObject $Connection -Path '/policies' -Method 'Get'
 
-            if ($Policies)
+            if ($Policies -is [psobject])
             {
                 $Policies.policies
             }
@@ -1961,7 +1986,7 @@ function Get-NessusPolicyTemplate
         {
             $Templates =  InvokeNessusRestRequest -SessionObject $Connection -Path '/editor/policy/templates' -Method 'Get'
 
-            if ($Templates)
+            if ($Templates -is [psobject])
             {
                 foreach($Template in $Templates.templates)
                 {
