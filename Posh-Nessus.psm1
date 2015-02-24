@@ -611,7 +611,7 @@ function New-NessusUser
                    ValueFromPipelineByPropertyName=$true)]
         [Alias('Index')]
         [int32[]]
-        $Id = @(),
+        $SessionId = @(),
 
         # Credentials for connecting to the Nessus Server
         [Parameter(Mandatory=$true,
