@@ -271,18 +271,15 @@ function Remove-NessusSession
     VERBOSE: received 196-byte response of content type application/json
 
 
-    lockout          : 0
-    whatsnew         : True
-    container_id     : 0
-    groups           : 
-    whatsnew_version : 
-    lastlogin        : 1422921992
-    permissions      : 128
-    type             : local
-    name             : carlos
-    email            : 
-    username         : carlos
-    id               : 2
+    Id         : 2
+    Name       : carlos
+    UserName   : carlos
+    Email      : 
+    Type       : local
+    Permission : Sysadmin
+    LastLogin  : 2/23/2015 8:58:49 PM
+    Groups     : 
+    Connectors : 
 #>
 function Get-NessusSessionInfo
 {
@@ -298,6 +295,7 @@ function Get-NessusSessionInfo
 
     Begin
     {
+         $origin = New-Object -Type DateTime -ArgumentList 1970, 1, 1, 0, 0, 0, 0
     }
     Process
     {
@@ -324,13 +322,25 @@ function Get-NessusSessionInfo
                     'Headers'       = @{'X-Cookie' = "token=$($Connection.Token)"}
                     'ErrorVariable' = 'NessusSessionError'
                 }
-                Invoke-RestMethod @RestMethodParams
+                $SessInfo = Invoke-RestMethod @RestMethodParams
+                $SessionProps = [ordered]@{}
+                $SessionProps.Add('Id', $SessInfo.id)
+                $SessionProps.Add('Name', $SessInfo.name)
+                $SessionProps.Add('UserName', $SessInfo.UserName)
+                $SessionProps.Add('Email', $SessInfo.Email)
+                $SessionProps.Add('Type', $SessInfo.Type)
+                $SessionProps.Add('Permission', $PermissionsId2Name[$SessInfo.permissions])
+                $SessionProps.Add('LastLogin', $origin.AddSeconds($SessInfo.lastlogin).ToLocalTime())
+                $SessionProps.Add('Groups', $SessInfo.groups)
+                $SessionProps.Add('Connectors', $SessInfo.connectors)
+
+                $SessInfoObj = New-Object -TypeName psobject -Property $SessionProps
+                $SessInfoObj.pstypenames[0] = 'Nessus.SessionInfo'
+                $SessInfoObj
             }
         }
     }
-    End
-    {
-    }
+    End{}
 }
 
 #endregion
