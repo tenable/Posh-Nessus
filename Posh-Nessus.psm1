@@ -787,13 +787,41 @@ function Get-NessusFolder
 
 <#
 .Synops
-   Short description
+   Pause a running scan on a Nessus server.
 .DESCRIPTION
-   Long description
+   Pause a running scan on a Nessus server.
 .EXAMPLE
-   Example of how to use this cmdlet
-.EXAMPLE
-   Another example of how to use this cmdlet
+    Suspend-NessusScan -SessionId 0 -ScanId 46
+
+
+    Name            : Whole Lab
+    ScanId          : 46
+    Status          : running
+    Enabled         : 
+    Owner           : carlos
+    AlternateTarget : 
+    IsPCI           : 
+    UserPermission  : 
+    CreationDate    : 2/24/2015 6:17:11 AM
+    LastModified    : 2/24/2015 6:17:11 AM
+    StartTime       : 12/31/1969 8:00:00 PM
+
+    PS C:\> Get-NessusScan -SessionId 0 -Status Paused
+
+
+    Name           : Whole Lab
+    ScanId         : 46
+    Status         : paused
+    Enabled        : False
+    FolderId       : 2
+    Owner          : carlos
+    UserPermission : 
+    Rules          : 
+    Shared         : False
+    TimeZone       : 
+    CreationDate   : 2/24/2015 6:17:11 AM
+    LastModified   : 2/24/2015 6:22:17 AM
+    StartTime      : 12/31/1969 8:00:00 PM
 #>
 function Suspend-NessusScan
 {
@@ -815,7 +843,10 @@ function Suspend-NessusScan
         $ScanId 
     )
 
-    Begin{}
+    Begin
+    {
+        $origin = New-Object -Type DateTime -ArgumentList 1970, 1, 1, 0, 0, 0, 0
+    }
     Process
     {
         $ToProcess = @()
@@ -839,7 +870,23 @@ function Suspend-NessusScan
 
             if ($Scans -is [psobject])
             {
-                $Scans
+                $scan = $Scans.scan
+                $ScanProps = [ordered]@{}
+                $ScanProps.add('Name', $scan.name)
+                $ScanProps.add('ScanId', $ScanId)
+                $ScanProps.add('HistoryId', $scan.id)
+                $ScanProps.add('Status', $scan.status)
+                $ScanProps.add('Enabled', $scan.enabled)
+                $ScanProps.add('Owner', $scan.owner)
+                $ScanProps.add('AlternateTarget', $scan.ownalt_targetser)
+                $ScanProps.add('IsPCI', $scan.is_pci)
+                $ScanProps.add('UserPermission', $PermissionsId2Name[$scan.user_permissions])
+                $ScanProps.add('CreationDate', $origin.AddSeconds($scan.creation_date).ToLocalTime())
+                $ScanProps.add('LastModified', $origin.AddSeconds($scan.last_modification_date).ToLocalTime())
+                $ScanProps.add('StartTime', $origin.AddSeconds($scan.starttime).ToLocalTime())
+                $ScanObj = New-Object -TypeName psobject -Property $ScanProps
+                $ScanObj.pstypenames[0] = 'Nessus.RunningScan'
+                $ScanObj
             }
         }
     }
@@ -849,13 +896,44 @@ function Suspend-NessusScan
 
 <#
 .Synopsis
-   Short description
+   Resume a paused scan on a Nessus server.
 .DESCRIPTION
-   Long description
+   Resume a paused scan on a Nessus server.
 .EXAMPLE
-   Example of how to use this cmdlet
-.EXAMPLE
-   Another example of how to use this cmdlet
+   Resume-NessusScan -SessionId 0 -ScanId 46
+
+
+    Name            : Whole Lab
+    ScanId          : 46
+    Status          : paused
+    Enabled         : 
+    Owner           : carlos
+    AlternateTarget : 
+    IsPCI           : 
+    UserPermission  : 
+    CreationDate    : 2/24/2015 6:17:11 AM
+    LastModified    : 2/24/2015 6:17:11 AM
+    StartTime       : 12/31/1969 8:00:00 PM
+
+
+
+
+    PS C:\> Get-NessusScan -SessionId 0 -Status Running
+
+
+    Name           : Whole Lab
+    ScanId         : 46
+    Status         : running
+    Enabled        : False
+    FolderId       : 2
+    Owner          : carlos
+    UserPermission : 
+    Rules          : 
+    Shared         : False
+    TimeZone       : 
+    CreationDate   : 2/24/2015 6:17:11 AM
+    LastModified   : 2/24/2015 6:25:34 AM
+    StartTime      : 12/31/1969 8:00:00 PM
 #>
 function Resume-NessusScan
 {
@@ -879,6 +957,7 @@ function Resume-NessusScan
 
     Begin
     {
+        $origin = New-Object -Type DateTime -ArgumentList 1970, 1, 1, 0, 0, 0, 0
     }
     Process
     {
@@ -904,7 +983,23 @@ function Resume-NessusScan
 
             if ($Scans -is [psobject])
             {
-                $Scans
+                $scan = $Scans.scan
+                $ScanProps = [ordered]@{}
+                $ScanProps.add('Name', $scan.name)
+                $ScanProps.add('ScanId', $ScanId)
+                $ScanProps.add('HistoryId', $scan.id)
+                $ScanProps.add('Status', $scan.status)
+                $ScanProps.add('Enabled', $scan.enabled)
+                $ScanProps.add('Owner', $scan.owner)
+                $ScanProps.add('AlternateTarget', $scan.ownalt_targetser)
+                $ScanProps.add('IsPCI', $scan.is_pci)
+                $ScanProps.add('UserPermission', $PermissionsId2Name[$scan.user_permissions])
+                $ScanProps.add('CreationDate', $origin.AddSeconds($scan.creation_date).ToLocalTime())
+                $ScanProps.add('LastModified', $origin.AddSeconds($scan.last_modification_date).ToLocalTime())
+                $ScanProps.add('StartTime', $origin.AddSeconds($scan.starttime).ToLocalTime())
+                $ScanObj = New-Object -TypeName psobject -Property $ScanProps
+                $ScanObj.pstypenames[0] = 'Nessus.RunningScan'
+                $ScanObj
             }
         }
     }
@@ -916,13 +1011,45 @@ function Resume-NessusScan
 
 <#
 .Synopsis
-   Short description
+   Cancel a scan on a Nessus server.
 .DESCRIPTION
-   Long description
+   Cancel a scan on a Nessus server.
 .EXAMPLE
-   Example of how to use this cmdlet
-.EXAMPLE
-   Another example of how to use this cmdlet
+   Stop-NessusScan -SessionId 0 -ScanId 46
+
+
+    Name            : Whole Lab
+    ScanId          : 46
+    Status          : running
+    Enabled         : 
+    Owner           : carlos
+    AlternateTarget : 
+    IsPCI           : 
+    UserPermission  : 
+    CreationDate    : 2/24/2015 6:17:11 AM
+    LastModified    : 2/24/2015 6:17:11 AM
+    StartTime       : 12/31/1969 8:00:00 PM
+
+
+
+
+    PS C:\> Get-NessusScan -SessionId 0 
+
+
+    Name           : Whole Lab
+    ScanId         : 46
+    Status         : canceled
+    Enabled        : False
+    FolderId       : 2
+    Owner          : carlos
+    UserPermission : 
+    Rules          : 
+    Shared         : False
+    TimeZone       : 
+    CreationDate   : 2/24/2015 6:17:11 AM
+    LastModified   : 2/24/2015 6:27:20 AM
+    StartTime      : 12/31/1969 8:00:00 PM
+
 #>
 function Stop-NessusScan
 {
@@ -946,6 +1073,7 @@ function Stop-NessusScan
 
     Begin
     {
+        $origin = New-Object -Type DateTime -ArgumentList 1970, 1, 1, 0, 0, 0, 0
     }
     Process
     {
@@ -971,7 +1099,23 @@ function Stop-NessusScan
 
             if ($Scans -is [psobject])
             {
-                $Scans
+                $scan = $Scans.scan
+                $ScanProps = [ordered]@{}
+                $ScanProps.add('Name', $scan.name)
+                $ScanProps.add('ScanId', $ScanId)
+                $ScanProps.add('HistoryId', $scan.id)
+                $ScanProps.add('Status', $scan.status)
+                $ScanProps.add('Enabled', $scan.enabled)
+                $ScanProps.add('Owner', $scan.owner)
+                $ScanProps.add('AlternateTarget', $scan.ownalt_targetser)
+                $ScanProps.add('IsPCI', $scan.is_pci)
+                $ScanProps.add('UserPermission', $PermissionsId2Name[$scan.user_permissions])
+                $ScanProps.add('CreationDate', $origin.AddSeconds($scan.creation_date).ToLocalTime())
+                $ScanProps.add('LastModified', $origin.AddSeconds($scan.last_modification_date).ToLocalTime())
+                $ScanProps.add('StartTime', $origin.AddSeconds($scan.starttime).ToLocalTime())
+                $ScanObj = New-Object -TypeName psobject -Property $ScanProps
+                $ScanObj.pstypenames[0] = 'Nessus.RunningScan'
+                $ScanObj
             }
         }
     }
@@ -1019,6 +1163,7 @@ function Start-NessusScan
 
     Begin
     {
+        $origin = New-Object -Type DateTime -ArgumentList 1970, 1, 1, 0, 0, 0, 0
     }
     Process
     {
@@ -1049,7 +1194,12 @@ function Start-NessusScan
 
             if ($Scans -is [psobject])
             {
-                $Scans
+
+                $ScanProps = [ordered]@{}
+                $ScanProps.add('ScanUUID', $scans.scan_uuid)
+                $ScanObj = New-Object -TypeName psobject -Property $ScanProps
+                $ScanObj.pstypenames[0] = 'Nessus.LaunchedScan'
+                $ScanObj
             }
         }
     }
@@ -1086,11 +1236,19 @@ function Get-NessusScan
                    Position=1,
                    ValueFromPipelineByPropertyName=$true)]
         [int32]
-        $FolderId 
+        $FolderId,
+
+        [Parameter(Mandatory=$false,
+                   Position=2,
+                   ValueFromPipelineByPropertyName=$true)]
+        [ValidateSet('Completed', 'Imported', 'Running', 'Paused', 'Canceled')]
+        [string]
+        $Status
     )
 
     Begin
     {
+        $origin = New-Object -Type DateTime -ArgumentList 1970, 1, 1, 0, 0, 0, 0
     }
     Process
     {
@@ -1121,9 +1279,34 @@ function Get-NessusScan
 
             if ($Scans -is [psobject])
             {
-                foreach ($scan in $Scans.scans)
+                
+                if($Status.length -gt 0)
                 {
-                    $scan
+                    $Scans2Process = $Scans.scans | Where-Object {$_.status -eq $Status.ToLower()}
+                }
+                else
+                {
+                    $Scans2Process = $Scans.scans
+                }
+                foreach ($scan in $Scans2Process)
+                {
+                    $ScanProps = [ordered]@{}
+                    $ScanProps.add('Name', $scan.name)
+                    $ScanProps.add('ScanId', $scan.id)
+                    $ScanProps.add('Status', $scan.status)
+                    $ScanProps.add('Enabled', $scan.enabled)
+                    $ScanProps.add('FolderId', $scan.folder_id)
+                    $ScanProps.add('Owner', $scan.owner)
+                    $ScanProps.add('UserPermission', $PermissionsId2Name[$scan.user_permissions])
+                    $ScanProps.add('Rules', $scan.rrules)
+                    $ScanProps.add('Shared', $scan.shared)
+                    $ScanProps.add('TimeZone', $scan.timezone)
+                    $ScanProps.add('CreationDate', $origin.AddSeconds($scan.creation_date).ToLocalTime())
+                    $ScanProps.add('LastModified', $origin.AddSeconds($scan.last_modification_date).ToLocalTime())
+                    $ScanProps.add('StartTime', $origin.AddSeconds($scan.starttime).ToLocalTime())
+                    $ScanObj = New-Object -TypeName psobject -Property $ScanProps
+                    $ScanObj.pstypenames[0] = 'Nessus.Scan'
+                    $ScanObj
                 }
             }
         }
@@ -1597,13 +1780,35 @@ function Show-NessusScanHistory
 
 <#
 .Synopsis
-   Short description
+   Deletes a scan result from a Nessus server.
 .DESCRIPTION
-   Long description
+   Deletes a scan result from a Nessus server.
 .EXAMPLE
-   Example of how to use this cmdlet
-.EXAMPLE
-   Another example of how to use this cmdlet
+    Get-NessusScan -SessionId 0 -Status Imported | Remove-NessusScan -SessionId 0 -Verbose
+    VERBOSE: Removing scan with Id 45
+    VERBOSE: DELETE https://192.168.1.211:8834/scans/45 with 0-byte payload
+    VERBOSE: received 4-byte response of content type application/json
+    VERBOSE: Scan Removed
+    VERBOSE: Removing scan with Id 41
+    VERBOSE: DELETE https://192.168.1.211:8834/scans/41 with 0-byte payload
+    VERBOSE: received 4-byte response of content type application/json
+    VERBOSE: Scan Removed
+    VERBOSE: Removing scan with Id 39
+    VERBOSE: DELETE https://192.168.1.211:8834/scans/39 with 0-byte payload
+    VERBOSE: received 4-byte response of content type application/json
+    VERBOSE: Scan Removed
+    VERBOSE: Removing scan with Id 37
+    VERBOSE: DELETE https://192.168.1.211:8834/scans/37 with 0-byte payload
+    VERBOSE: received 4-byte response of content type application/json
+    VERBOSE: Scan Removed
+    VERBOSE: Removing scan with Id 7
+    VERBOSE: DELETE https://192.168.1.211:8834/scans/7 with 0-byte payload
+    VERBOSE: received 4-byte response of content type application/json
+    VERBOSE: Scan Removed
+    VERBOSE: Removing scan with Id 5
+    VERBOSE: DELETE https://192.168.1.211:8834/scans/5 with 0-byte payload
+    VERBOSE: received 4-byte response of content type application/json
+    VERBOSE: Scan Removed
 #>
 function Remove-NessusScan
 {
