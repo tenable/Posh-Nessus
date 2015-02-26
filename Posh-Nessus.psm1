@@ -18,14 +18,22 @@
     'Sysadmin' = 128
  }
 
+ $severity = @{
+    0 ='Info'
+    1 ='Low'
+    2 ='Medium'
+    3 ='High'
+    4 ='Critical'
+ } 
+
  # Load Functions
 
- . .\User.ps1
- . .\Session.ps1
- . .\Policy.ps1
- . .\Scan.ps1
- . .\Folders.ps1
- . .\Server.ps1
+ . "$PSScriptRoot\User.ps1"
+ . "$PSScriptRoot\Session.ps1"
+ . "$PSScriptRoot\Policy.ps1"
+ . "$PSScriptRoot\Scan.ps1"
+ . "$PSScriptRoot\Folders.ps1"
+ . "$PSScriptRoot\Server.ps1"
 
 
 # Supporting Functions
@@ -40,7 +48,7 @@ function InvokeNessusRestRequest
         $SessionObject,
 
         [Parameter(Mandatory=$false)]
-        [hashtable]$Parameter,
+        $Parameter,
 
         [Parameter(Mandatory=$true)]
         [string]$Path,
