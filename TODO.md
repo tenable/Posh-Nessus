@@ -39,6 +39,6 @@ Get-NessusPluginFamily - List Nessus plugin families.
 * Show-NessusGroupMember  - Show members of a specific nessus user group.
 
 ## Folder
-New-NessusFolder - Creates a new folder for the current user
-Remove-NessusFolder - Deletes a folder
-Set-NessusFolder - Returns the current user's scan folders.
+* New-NessusFolder - Creates a new folder for the current user
+* Remove-NessusFolder - Deletes a folder
+* Set-NessusFolder - Returns the current user's scan folders.
