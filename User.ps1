@@ -71,6 +71,7 @@ function Get-NessusUser
                     $UserProperties.Add('Type', $_.type)
                     $UserProperties.Add('Permission', $PermissionsId2Name[$_.permissions])
                     $UserProperties.Add('LastLogin', $origin.AddSeconds($_.lastlogin).ToLocalTime())
+                    $UserProperties.Add('SessionId', $Connection.SessionId)
                     $UserObj = New-Object -TypeName psobject -Property $UserProperties
                     $UserObj.pstypenames[0] = 'Nessus.User'
                     $UserObj

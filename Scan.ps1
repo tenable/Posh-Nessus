@@ -100,6 +100,7 @@ function Suspend-NessusScan
                 $ScanProps.add('CreationDate', $origin.AddSeconds($scan.creation_date).ToLocalTime())
                 $ScanProps.add('LastModified', $origin.AddSeconds($scan.last_modification_date).ToLocalTime())
                 $ScanProps.add('StartTime', $origin.AddSeconds($scan.starttime).ToLocalTime())
+                $ScanProps.Add('SessionId', $Connection.SessionId)
                 $ScanObj = New-Object -TypeName psobject -Property $ScanProps
                 $ScanObj.pstypenames[0] = 'Nessus.RunningScan'
                 $ScanObj
@@ -213,6 +214,7 @@ function Resume-NessusScan
                 $ScanProps.add('CreationDate', $origin.AddSeconds($scan.creation_date).ToLocalTime())
                 $ScanProps.add('LastModified', $origin.AddSeconds($scan.last_modification_date).ToLocalTime())
                 $ScanProps.add('StartTime', $origin.AddSeconds($scan.starttime).ToLocalTime())
+                $ScanProps.Add('SessionId', $Connection.SessionId)
                 $ScanObj = New-Object -TypeName psobject -Property $ScanProps
                 $ScanObj.pstypenames[0] = 'Nessus.RunningScan'
                 $ScanObj
@@ -329,6 +331,7 @@ function Stop-NessusScan
                 $ScanProps.add('CreationDate', $origin.AddSeconds($scan.creation_date).ToLocalTime())
                 $ScanProps.add('LastModified', $origin.AddSeconds($scan.last_modification_date).ToLocalTime())
                 $ScanProps.add('StartTime', $origin.AddSeconds($scan.starttime).ToLocalTime())
+                $ScanProps.Add('SessionId', $Connection.SessionId)
                 $ScanObj = New-Object -TypeName psobject -Property $ScanProps
                 $ScanObj.pstypenames[0] = 'Nessus.RunningScan'
                 $ScanObj
@@ -435,6 +438,8 @@ function Start-NessusScan
 
                 $ScanProps = [ordered]@{}
                 $ScanProps.add('ScanUUID', $scans.scan_uuid)
+                $ScanProps.add('ScanId', $ScanId)
+                $ScanProps.add('SessionId', $Connection.SessionId)
                 $ScanObj = New-Object -TypeName psobject -Property $ScanProps
                 $ScanObj.pstypenames[0] = 'Nessus.LaunchedScan'
                 $ScanObj
@@ -597,6 +602,7 @@ function Get-NessusScan
                     $ScanProps.add('CreationDate', $origin.AddSeconds($scan.creation_date).ToLocalTime())
                     $ScanProps.add('LastModified', $origin.AddSeconds($scan.last_modification_date).ToLocalTime())
                     $ScanProps.add('StartTime', $origin.AddSeconds($scan.starttime).ToLocalTime())
+                    $ScanProps.Add('SessionId', $Connection.SessionId)
                     $ScanObj = New-Object -TypeName psobject -Property $ScanProps
                     $ScanObj.pstypenames[0] = 'Nessus.Scan'
                     $ScanObj
@@ -834,6 +840,7 @@ function Show-NessusScanDetail
                 $ScanInfo.add('EditAllowed', $ScanDetails.info.edit_allowed)
                 $ScanInfo.add('LastModified', $origin.AddSeconds($ScanDetails.info.timestamp).ToLocalTime())
                 $ScanInfo.add('ScanStart', $origin.AddSeconds($ScanDetails.info.scan_start).ToLocalTime())
+                $ScanInfo.Add('SessionId', $Connection.SessionId)
                 $InfoObj = New-Object -TypeName psobject -Property $ScanInfo
                 $InfoObj.pstypenames[0] = 'Nessus.Scan.Info'
 
@@ -965,6 +972,8 @@ function Show-NessusScanHostDetail
                 $HostProps.Add('Info', $ScanDetails.info)
                 $HostProps.Add('Vulnerabilities', $ScanDetails.vulnerabilities)
                 $HostProps.Add('Compliance', $ScanDetails.compliance)
+                $HostProps.Add('ScanId', $ScanId)
+                $HostProps.Add('SessionId', $Connection.SessionId)
                 $HostObj = New-Object -TypeName psobject -Property $HostProps
                 $HostObj.pstypenames[0] = 'Nessus.Scan.HostDetails'
                 $HostObj             
@@ -1099,6 +1108,8 @@ function Show-NessusScanHost
                     $HostProps.Add('Medium', $Host.medium)
                     $HostProps.Add('Low', $Host.low)
                     $HostProps.Add('Info', $Host.info)
+                    $HostProps.Add('ScanId', $ScanId)
+                    $HostProps.Add('SessionId', $Connection.SessionId)
                     $HostObj = New-Object -TypeName psobject -Property $HostProps
                     $HostObj.pstypenames[0] = 'Nessus.Scan.Host'
                     $HostObj
@@ -1209,6 +1220,7 @@ function Show-NessusScanHistory
                     $HistoryProps['Type'] = $History.type
                     $HistoryProps['CreationDate'] = $origin.AddSeconds($History.creation_date).ToLocalTime()
                     $HistoryProps['LastModifiedDate'] = $origin.AddSeconds($History.last_modification_date).ToLocalTime()
+                    $HistoryProps['SessionId'] = $Connection.SessionId
                     $HistObj = New-Object -TypeName psobject -Property $HistoryProps
                     $HistObj.pstypenames[0] = 'Nessus.Scan.History'
                     $HistObj
@@ -1530,6 +1542,7 @@ function Get-NessusScanTemplate
                     $TmplProps.add('UUID', $Template.uuid)
                     $TmplProps.add('CloudOnly', $Template.cloud_only)
                     $TmplProps.add('SubscriptionOnly', $Template.subscription_only)
+                    $TmplProps.add('SessionId', $Connection.SessionId)
                     $Tmplobj = New-Object -TypeName psobject -Property $TmplProps
                     $Tmplobj.pstypenames[0] = 'Nessus.ScanTemplate'
                     $Tmplobj

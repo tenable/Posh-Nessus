@@ -75,6 +75,7 @@ function Get-NessusFolder
                     $FolderProps.Add('Type', $folder.type)
                     $FolderProps.Add('Default', $folder.default_tag)
                     $FolderProps.Add('Unread', $folder.unread_count)
+                    $FolderProps.Add('SessionId', $Connection.SessionId)
                     $FolderObj = New-Object -TypeName psobject -Property $FolderProps
                     $FolderObj.pstypenames[0] = 'Nessus.Folder'
                     $FolderObj

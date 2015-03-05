@@ -121,6 +121,7 @@ function Get-NessusPolicyTemplate
                     $TmplProps.add('UUID', $Template.uuid)
                     $TmplProps.add('CloudOnly', $Template.cloud_only)
                     $TmplProps.add('SubscriptionOnly', $Template.subscription_only)
+                    $TmplProps.add('SessionId', $Connection.SessionId)
                     $Tmplobj = New-Object -TypeName psobject -Property $TmplProps
                     $Tmplobj.pstypenames[0] = 'Nessus.PolicyTemplate'
                     $Tmplobj
