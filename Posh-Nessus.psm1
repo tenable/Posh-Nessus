@@ -34,6 +34,7 @@
  . "$PSScriptRoot\Scan.ps1"
  . "$PSScriptRoot\Folders.ps1"
  . "$PSScriptRoot\Server.ps1"
+ . "$PSScriptRoot\Plugin.ps1"
 
 
 # Supporting Functions

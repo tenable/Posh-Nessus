@@ -19,15 +19,11 @@
 * Show-NessusPolicyDetails - Show details for a nessus scan policy..
 
 ## Rules
-Get-NessusRule - Returns the current user plugin rules.
-Delete-NessusRule - Deletes a plugin rule.
-New-NessusRule - Creates a new plugin rule for the current user.
-Set-NessusRule - Modify a plugin rule for the current user. 
+* Get-NessusRule - Returns the current user plugin rules.
+* Delete-NessusRule - Deletes a plugin rule.
+* New-NessusRule - Creates a new plugin rule for the current user.
+* Set-NessusRule - Modify a plugin rule for the current user. 
 
-## Plugins
-Show-NessusPlugin - Show a  specific plugin or multiple plugins details.
-Show-NessusPluginFamily - Show a specific plugin family details.
-Get-NessusPluginFamily - List Nessus plugin families.
 
 ## Group
 * New-NessusGroup - Create a nessus user group.
@@ -37,4 +33,8 @@ Get-NessusPluginFamily - List Nessus plugin families.
 * Rename-NessusGroup - Rename a nessus user group name 
 * Get-NessusGroup - Get objects for each nessus user group.
 * Show-NessusGroupMember  - Show members of a specific nessus user group.
+
+## General
+* Create Pester test scripts.
+* Create XML Help for all functions
 

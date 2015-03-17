@@ -1,0 +1,31 @@
+﻿<?xml version="1.0" encoding="utf-16"?>
+<Configuration>
+<ViewDefinitions>
+<View>
+    <Name>Nessus.PluginFamily</Name>
+    <ViewSelectedBy>
+        <TypeName>Nessus.PluginFamily</TypeName>
+    </ViewSelectedBy>
+    <ListControl>
+        <ListEntries>
+            <ListEntry>
+                <ListItems>
+                    <ListItem> 
+                        <Label>Name</Label>
+                        <PropertyName>Name</PropertyName>
+                    </ListItem>
+                    <ListItem>
+                        <Label>Id</Label>
+                        <PropertyName>Id</PropertyName>
+                    </ListItem>
+                    <ListItem>
+                        <Label>Count</Label>
+                        <PropertyName>Count</PropertyName>
+                    </ListItem>
+                    </ListItems>
+            </ListEntry>
+        </ListEntries>
+    </ListControl>
+</View>
+</ViewDefinitions>
+</Configuration>

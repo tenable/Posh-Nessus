@@ -62,7 +62,9 @@ PowerShellVersion = '3.0'
 # Format files (.ps1xml) to be loaded when importing this module
 FormatsToProcess = @('.\Format\Nessus.Session.ps1xml',
                       '.\Format\Nessus.ServerStatus.ps1xml',
-                      '.\Format\Nessus.Scan.HostDetails.ps1xml')
+                      '.\Format\Nessus.Scan.HostDetails.ps1xml',
+                      '.\Format\Nessus.PluginFamily.ps1xml',
+                      '.\Format\Nessus.PluginFamilyDetails.ps1xml')
 
 # Modules to import as nested modules of the module specified in RootModule/ModuleToProcess
 # NestedModules = @()
