@@ -148,7 +148,7 @@ function InvokeNessusRestRequest
         }
         else
         {
-            write-error -ErrorRecord $_ 
+            $PSCmdlet.ThrowTerminatingError($_)
         }
     }
     $Results

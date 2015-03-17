@@ -71,7 +71,7 @@ function Get-NessusFolder
                 {
                     $FolderProps = [ordered]@{}
                     $FolderProps.Add('Name', $folder.name)
-                    $FolderProps.Add('Id', $folder.id)
+                    $FolderProps.Add('FolderId', $folder.id)
                     $FolderProps.Add('Type', $folder.type)
                     $FolderProps.Add('Default', $folder.default_tag)
                     $FolderProps.Add('Unread', $folder.unread_count)
@@ -88,4 +88,171 @@ function Get-NessusFolder
     }
 }
 
+
+function New-NessusFolder
+{
+    [CmdletBinding()]
+    Param
+    (
+        # Nessus session Id
+        [Parameter(Mandatory=$true,
+                   Position=0,
+                   ValueFromPipelineByPropertyName=$true)]
+        [Alias('Index')]
+        [int32[]]
+        $SessionId = @(),
+
+        [Parameter(Mandatory=$true,
+                   Position=1,
+                   ValueFromPipelineByPropertyName=$true)]
+        [string]
+        $Name
+    )
+
+    Begin
+    {
+    }
+    Process
+    {
+        $ToProcess = @()
+
+        foreach($i in $SessionId)
+        {
+            $Connections = $Global:NessusConn
+            
+            foreach($Connection in $Connections)
+            {
+                if ($Connection.SessionId -eq $i)
+                {
+                    $ToProcess += $Connection
+                }
+            }
+        }
+
+        foreach($Connection in $ToProcess)
+        {
+            $Folder =  InvokeNessusRestRequest -SessionObject $Connection -Path '/folders' -Method 'Post' -Parameter @{'name' = $Name}
+
+            if ($Folder -is [psobject])
+            {
+               Get-NessusFolder -SessionId $Connection.sessionid | Where-Object {
+                    $_.FolderId -eq $Folder.id
+               }
+            }
+        }
+    }
+    End
+    {
+    }
+}
+
+
+function Remove-NessusFolder
+{
+    [CmdletBinding()]
+    Param
+    (
+        # Nessus session Id
+        [Parameter(Mandatory=$true,
+                   Position=0,
+                   ValueFromPipelineByPropertyName=$true)]
+        [Alias('Index')]
+        [int32[]]
+        $SessionId = @(),
+
+        [Parameter(Mandatory=$true,
+                   Position=1,
+                   ValueFromPipelineByPropertyName=$true)]
+        [Int]
+        $FolderId
+    )
+
+    Begin
+    {
+    }
+    Process
+    {
+        $ToProcess = @()
+
+        foreach($i in $SessionId)
+        {
+            $Connections = $Global:NessusConn
+            
+            foreach($Connection in $Connections)
+            {
+                if ($Connection.SessionId -eq $i)
+                {
+                    $ToProcess += $Connection
+                }
+            }
+        }
+
+        foreach($Connection in $ToProcess)
+        {   
+            $Folder =  InvokeNessusRestRequest -SessionObject $Connection -Path "/folders/$($FolderId)" -Method 'DELETE'
+            
+        }
+    }
+    End
+    {
+    }
+}
+
+
+function Rename-NessusFolder
+{
+    [CmdletBinding()]
+    Param
+    (
+        # Nessus session Id
+        [Parameter(Mandatory=$true,
+                   Position=0,
+                   ValueFromPipelineByPropertyName=$true)]
+        [Alias('Index')]
+        [int32[]]
+        $SessionId = @(),
+
+        [Parameter(Mandatory=$true,
+                   Position=1,
+                   ValueFromPipelineByPropertyName=$true)]
+        [Int]
+        $FolderId,
+
+        [Parameter(Mandatory=$true,
+                   Position=2,
+                   ValueFromPipelineByPropertyName=$true)]
+        [string]
+        $Name
+    )
+
+    Begin
+    {
+    }
+    Process
+    {
+        $ToProcess = @()
+
+        foreach($i in $SessionId)
+        {
+            $Connections = $Global:NessusConn
+            
+            foreach($Connection in $Connections)
+            {
+                if ($Connection.SessionId -eq $i)
+                {
+                    $ToProcess += $Connection
+                }
+            }
+        }
+
+        foreach($Connection in $ToProcess)
+        {   
+        
+            $Folder =  InvokeNessusRestRequest -SessionObject $Connection -Path "/folders/$($FolderId)" -Method 'PUT' -Parameter @{'name' = $Name}
+        }
+    }
+    End
+    {
+    }
+}
 #endregion
