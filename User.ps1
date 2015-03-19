@@ -37,9 +37,7 @@ function Get-NessusUser
     Begin
     {
         $origin = New-Object -Type DateTime -ArgumentList 1970, 1, 1, 0, 0, 0, 0
-    }
-    Process
-    {
+
         $ToProcess = @()
 
         foreach($i in $SessionId)
@@ -54,6 +52,10 @@ function Get-NessusUser
                 }
             }
         }
+    }
+    Process
+    {
+        
 
         foreach($Connection in $ToProcess)
         {
@@ -67,7 +69,7 @@ function Get-NessusUser
                     $UserProperties.Add('Name', $_.name)
                     $UserProperties.Add('UserName', $_.username)
                     $UserProperties.Add('Email', $_.email)
-                    $UserProperties.Add('Id', $_.id)
+                    $UserProperties.Add('UserId', $_.id)
                     $UserProperties.Add('Type', $_.type)
                     $UserProperties.Add('Permission', $PermissionsId2Name[$_.permissions])
                     $UserProperties.Add('LastLogin', $origin.AddSeconds($_.lastlogin).ToLocalTime())
@@ -135,24 +137,26 @@ function New-NessusUser
 
     )
 
-    Begin{}
-    Process
+    Begin
     {
          $ToProcess = @()
 
-        foreach($i in $Id)
+        foreach($i in $SessionId)
         {
             $Connections = $Global:NessusConn
             
             foreach($Connection in $Connections)
             {
-                if ($Connection.Id -eq $i)
+                if ($Connection.SessionId -eq $i)
                 {
                     $ToProcess += $Connection
                 }
             }
         }
-
+    }
+    Process
+    {
+        
         foreach($Connection in $ToProcess)
         {
             $NewUserParams = @{}
@@ -183,4 +187,143 @@ function New-NessusUser
     End{}
 }
 
+
+<#
+.Synopsis
+   Short description
+.DESCRIPTION
+   Long description
+.EXAMPLE
+   Example of how to use this cmdlet
+.EXAMPLE
+   Another example of how to use this cmdlet
+#>
+function Remove-NessusUser
+{
+    [CmdletBinding()]
+    Param
+    (
+        # Nessus session Id
+        [Parameter(Mandatory=$true,
+                   Position=0,
+                   ValueFromPipelineByPropertyName=$true)]
+        [Alias('Index')]
+        [int32[]]
+        $SessionId = @(),
+
+        # Nessus User Id
+        [Parameter(Mandatory=$true,
+                   Position=1,
+                   ValueFromPipelineByPropertyName=$true)]
+        [int32[]]
+        $UserId
+    )
+
+    Begin
+    {
+         $ToProcess = @()
+        foreach($i in $SessionId)
+        {
+            $Connections = $Global:NessusConn
+            
+            foreach($Connection in $Connections)
+            {
+                if ($Connection.SessionId -eq $i)
+                {
+                    $ToProcess += $Connection
+                }
+            }
+        }
+    }
+    Process
+    {
+        foreach($Connection in $ToProcess)
+        {
+            foreach($uid in $UserId)
+            {
+                Write-Verbose -Message "Deleting user with Id $($uid)"
+                InvokeNessusRestRequest -SessionObject $Connection -Path "/users/$($uid)" -Method 'Delete'
+            }
+        }
+    }
+    End
+    {
+    }
+}
+
+
+<#
+.Synopsis
+   Short description
+.DESCRIPTION
+   Long description
+.EXAMPLE
+   Example of how to use this cmdlet
+.EXAMPLE
+   Another example of how to use this cmdlet
+#>
+function Set-NessusUserPassword
+{
+    [CmdletBinding()]
+    Param
+    (
+        # Nessus session Id
+        [Parameter(Mandatory=$true,
+                   Position=0,
+                   ValueFromPipelineByPropertyName=$true)]
+        [Alias('Index')]
+        [int32[]]
+        $SessionId = @(),
+
+        # Nessus User Id
+        [Parameter(Mandatory=$true,
+                   Position=1,
+                   ValueFromPipelineByPropertyName=$true)]
+        [int32[]]
+        $UserId, 
+
+        [Parameter(Mandatory=$true,
+                   Position=3,
+                   ValueFromPipelineByPropertyName=$true)]
+        [securestring]
+        $Password
+    )
+
+    Begin
+    {
+        $ToProcess = @()
+        foreach($i in $SessionId)
+        {
+            $Connections = $Global:NessusConn
+            
+            foreach($Connection in $Connections)
+            {
+                if ($Connection.SessionId -eq $i)
+                {
+                    $ToProcess += $Connection
+                }
+            }
+        }
+    }
+    Process
+    {
+        foreach($Connection in $ToProcess)
+        {
+            foreach($uid in $UserId)
+            {
+                Write-Verbose -Message "Updating user with Id $($uid)"
+                $pass =  [Runtime.InteropServices.Marshal]::PtrToStringAuto([Runtime.InteropServices.Marshal]::SecureStringToBSTR($Password))
+                $params = @{'password' = $pass}
+                $paramJson = ConvertTo-Json -InputObject $params -Compress
+                $uid
+                $paramJson
+                InvokeNessusRestRequest -SessionObject $Connection -Path "/users/$($uid)/chpasswd" -Method 'PUT' -Parameter $paramJson -ContentType 'application/json'
+                    
+            }    
+        }
+    }
+    End
+    {
+    }
+}
 #endregion

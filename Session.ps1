@@ -201,7 +201,7 @@ function Remove-NessusSession
         $connections = $Global:NessusConn
         $toremove = New-Object -TypeName System.Collections.ArrayList
         
-        if ($Id.Count -gt 0)
+        if ($SessionId.Count -gt 0)
         {
             foreach($i in $SessionId)
             {
@@ -226,11 +226,16 @@ function Remove-NessusSession
                     'ErrorVariable' = 'DisconnectError'
                     'ErrorAction' = 'SilentlyContinue'
                 }
-                $RemoveResponse = Invoke-RestMethod @RestMethodParams
-                if ($DisconnectError -is [psobject])
+                try
                 {
-                    Write-Verbose -Message "Session with Id $($connection.Id) seems to have expired."
+                    $RemoveResponse = Invoke-RestMethod @RestMethodParams
                 }
+                catch
+                {
+                    Write-Verbose -Message "Session with Id $($connection.SessionId) seems to have expired."
+                }
+                 
+                
                 Write-Verbose -message "Removing session from `$Global:NessusConn"
                 $Global:NessusConn.Remove($Connection)
                 Write-Verbose -Message "Session $($i) removed."
