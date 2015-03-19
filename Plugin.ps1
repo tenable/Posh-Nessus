@@ -179,7 +179,7 @@ function Show-NessusPluginFamilyDetails
             {
                 $DetailProps = [ordered]@{}
                 $DetailProps.Add('Name', $FamilyDetails.name)
-                $DetailProps.Add('Id', $FamilyDetails.id)
+                $DetailProps.Add('FamilyId', $FamilyDetails.id)
                 $DetailProps.Add('Plugins', $FamilyDetails.plugins)
                 $FamilyObj = New-Object -TypeName psobject -Property $DetailProps
                 $FamilyObj.pstypenames[0] = 'Nessus.PluginFamilyDetails'
