@@ -1,9 +1,8 @@
 # TODO
 
 ##User
-* Remove-NessusUser - Delete a specified nessus user.
 * Set-NessusUser - For changing a specified Nessus user settings.
-* Reset-NessusUserPassword - for changing a Nessus user password.
+
 
 ## Scan 
 * Import-NessusScan - Import a nessus scan.
