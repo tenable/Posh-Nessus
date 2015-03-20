@@ -35,6 +35,7 @@
  . "$PSScriptRoot\Folders.ps1"
  . "$PSScriptRoot\Server.ps1"
  . "$PSScriptRoot\Plugin.ps1"
+ . "$PSScriptRoot\UserGroup.ps1"
 
 
 # Supporting Functions
