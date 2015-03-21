@@ -1509,9 +1509,6 @@ function Get-NessusScanTemplate
 
     Begin
     {
-    }
-    Process
-    {
         $ToProcess = @()
 
         foreach($i in $SessionId)
@@ -1526,6 +1523,10 @@ function Get-NessusScanTemplate
                 }
             }
         }
+    }
+    Process
+    {
+        
 
         foreach($Connection in $ToProcess)
         {
@@ -1548,6 +1549,105 @@ function Get-NessusScanTemplate
                     $Tmplobj
                 }
             }
+        }
+    }
+    End
+    {
+    }
+}
+
+
+<#
+.Synopsis
+   Short description
+.DESCRIPTION
+   Long description
+.EXAMPLE
+   Example of how to use this cmdlet
+.EXAMPLE
+   Another example of how to use this cmdlet
+#>
+function New-NessusScan
+{
+    [CmdletBinding()]
+    Param
+    (
+        # Nessus session Id
+        [Parameter(Mandatory=$true,
+                   Position=0,
+                   ValueFromPipelineByPropertyName=$true)]
+        [Alias('Index')]
+        [int32[]]
+        $SessionId = @(),
+
+        [Parameter(Mandatory=$true,
+                   Position=1,
+                   ValueFromPipelineByPropertyName=$true)]
+        [string]
+        $Name,
+
+        [Parameter(Mandatory=$true,
+                   Position=1,
+                   ValueFromPipelineByPropertyName=$true)]
+        [string]
+        $TemplateUUID,
+
+        [Parameter(Mandatory=$true,
+                   Position=1,
+                   ValueFromPipelineByPropertyName=$true)]
+        [string]
+        $Targets,
+
+        [Parameter(Mandatory=$true,
+                   Position=1,
+                   ValueFromPipelineByPropertyName=$true)]
+        [bool]
+        $Enabled
+    )
+
+    Begin
+    {
+        $ToProcess = @()
+
+        foreach($i in $SessionId)
+        {
+            $Connections = $Global:NessusConn
+            
+            foreach($Connection in $Connections)
+            {
+                if ($Connection.SessionId -eq $i)
+                {
+                    $ToProcess += $Connection
+                }
+            }
+        }
+
+        # Build Scan JSON
+        $scanhash = [ordered]@{ 
+            'uuid' = $TemplateUUID
+            'settings' = @{
+                'name' = $Name
+                'text_targets' = $Targets
+            }
+        }
+
+        $ScanJson = ConvertTo-Json -InputObject $scanhash -Compress
+
+    }
+    Process
+    {
+        foreach($Connection in $ToProcess)
+        {
+            $ServerTypeParams = @{
+                'SessionObject' = $Connection
+                'Path' = '/scans'
+                'Method' = 'POST'
+                'ContentType' = 'application/json'
+                'Parameter' = $ScanJson
+            }
+
+            $NewScan =  InvokeNessusRestRequest @ServerTypeParams
+            $NewScan
         }
     }
     End

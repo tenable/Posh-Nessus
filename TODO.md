@@ -11,10 +11,7 @@
 
 ## Policy
 * Import-NessusPolicy - Import a nessus scan policy.
-* Copy-NessusPolicy - Copy a nessus scan policy.
-* Remove-NessusPolicy - Delete a nessus scan policy.
 * New-NessusPolicy - Create a new nessus scan policy.
-* Export-NessusPolicy - Export a nessus scan policy.
 * Show-NessusPolicyDetails - Show details for a nessus scan policy..
 
 ## Rules
@@ -24,14 +21,6 @@
 * Set-NessusRule - Modify a plugin rule for the current user. 
 
 
-## Group
-* New-NessusGroup - Create a nessus user group.
-* Remove-NessusGroup - Delete a nessus user
-* Remove-NessusGroupUser - Removes a user from a nessus group.
-* Add-NessusGroupUser - Adds a user to a nessus user group.
-* Rename-NessusGroup - Rename a nessus user group name 
-* Get-NessusGroup - Get objects for each nessus user group.
-* Show-NessusGroupMember  - Show members of a specific nessus user group.
 
 ## General
 * Create Pester test scripts.
