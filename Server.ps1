@@ -78,6 +78,8 @@ function Get-NessusServerInfo
                 $SrvInfoProp.Add('Capabilities', $ServerInfo.capabilities)
                 $SrvInfoProp.Add('UUID', $ServerInfo.server_uuid)
                 $SrvInfoProp.Add('Update', $ServerInfo.update)
+                $SrvInfoProp.Add('Enterprise', $ServerInfo.enterprise)
+                $SrvInfoProp.Add('License', $ServerInfo.license)
                 $SrvInfoObj = New-Object -TypeName psobject -Property $SrvInfoProp
                 $SrvInfoObj.pstypenames[0] = 'Nessus.ServerInfo'
                 $SrvInfoObj
