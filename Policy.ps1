@@ -59,7 +59,7 @@ function Get-NessusPolicy
                     $PolProps.Add('Name', $Policy.Name)
                     $PolProps.Add('PolicyId', $Policy.id)
                     $PolProps.Add('Description', $Policy.description)
-                    $PolProps.Add('TemplateUUID', $Policy.template_uuid)
+                    $PolProps.Add('PolicyUUID', $Policy.template_uuid)
                     $PolProps.Add('Visibility', $Policy.visibility)
                     $PolProps['Shared']  = &{ if ($Policy.shared -eq 1){$True}else{$False}}
                     $PolProps.Add('Owner', $Policy.owner)
@@ -139,7 +139,7 @@ function Get-NessusPolicyTemplate
                     $TmplProps.add('Name', $Template.name)
                     $TmplProps.add('Title', $Template.title)
                     $TmplProps.add('Description', $Template.desc)
-                    $TmplProps.add('UUID', $Template.uuid)
+                    $TmplProps.add('PolicyUUID', $Template.uuid)
                     $TmplProps.add('CloudOnly', $Template.cloud_only)
                     $TmplProps.add('SubscriptionOnly', $Template.subscription_only)
                     $TmplProps.add('SessionId', $Connection.SessionId)
