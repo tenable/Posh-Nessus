@@ -599,13 +599,23 @@ function Get-NessusScan
                     $ScanProps.add('Rules', $scan.rrules)
                     $ScanProps.add('Shared', $scan.shared)
                     $ScanProps.add('TimeZone', $scan.timezone)
-                    $ScanProps.add('CreationDate', $origin.AddSeconds($scan.creation_date).ToLocalTime())
-                    $ScanProps.add('LastModified', $origin.AddSeconds($scan.last_modification_date).ToLocalTime())
-                    $ScanProps.add('StartTime', $origin.AddSeconds($scan.starttime).ToLocalTime())
                     $ScanProps.add('Scheduled', $scan.control)
                     $ScanProps.add('DashboardEnabled', $scan.use_dashboard)
-                    $ScanProps.Add('SessionId', $Connection.SessionId)
-                    
+                    $ScanProps.Add('SessionId', $Connection.SessionId)                 
+                    $ScanProps.add('CreationDate', $origin.AddSeconds($scan.creation_date).ToLocalTime())
+                    $ScanProps.add('LastModified', $origin.AddSeconds($scan.last_modification_date).ToLocalTime())
+
+                    if ($scan.starttime -cnotlike "*T*")
+                    {
+                        $ScanProps.add('StartTime', $origin.AddSeconds($scan.starttime).ToLocalTime())
+                    }
+                    else
+                    {
+                        $StartTime = [datetime]::ParseExact($scan.starttime,"yyyyMMddTHHmmss",
+                                     [System.Globalization.CultureInfo]::InvariantCulture,
+                                     [System.Globalization.DateTimeStyles]::None)
+                        $ScanProps.add('StartTime', $StartTime)
+                    }
                     $ScanObj = New-Object -TypeName psobject -Property $ScanProps
                     $ScanObj.pstypenames[0] = 'Nessus.Scan'
                     $ScanObj
