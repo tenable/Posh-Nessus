@@ -1546,6 +1546,7 @@ function Remove-NessusScan
 .EXAMPLE
    Another example of how to use this cmdlet
 #>
+<#
 function Import-NessusScan
 {
     [CmdletBinding()]
@@ -1700,7 +1701,7 @@ function Import-NessusScan
     }
     End{}
 }
-
+#>
 
 <#
 .Synopsis
