@@ -1546,7 +1546,6 @@ function Remove-NessusScan
 .EXAMPLE
    Another example of how to use this cmdlet
 #>
-<#
 function Import-NessusScan
 {
     [CmdletBinding()]
@@ -1581,7 +1580,6 @@ function Import-NessusScan
 
     Begin
     {
-        Write-Warning -Message "This function does not work at this moment."
         if($Encrypted)
         {
             $ContentType = 'application/octet-stream'
@@ -1591,6 +1589,27 @@ function Import-NessusScan
         {
             $ContentType = 'application/octet-stream'
             $URIPath = '/file/upload'
+        }
+
+        $netAssembly = [Reflection.Assembly]::GetAssembly([System.Net.Configuration.SettingsSection])
+
+        if($netAssembly)
+        {
+            $bindingFlags = [Reflection.BindingFlags] "Static,GetProperty,NonPublic"
+            $settingsType = $netAssembly.GetType("System.Net.Configuration.SettingsSectionInternal")
+
+            $instance = $settingsType.InvokeMember("Section", $bindingFlags, $null, $null, @())
+
+            if($instance)
+            {
+                $bindingFlags = "NonPublic","Instance"
+                $useUnsafeHeaderParsingField = $settingsType.GetField("useUnsafeHeaderParsing", $bindingFlags)
+
+                if($useUnsafeHeaderParsingField)
+                {
+                  $useUnsafeHeaderParsingField.SetValue($instance, $true)
+                }
+            }
         }
     }
     Process
@@ -1613,95 +1632,38 @@ function Import-NessusScan
         foreach($Connection in $ToProcess)
         {
             $fileinfo = Get-ItemProperty -Path $File
-            $req = [System.Net.WebRequest]::Create("$($Connection.uri)$($URIPath)")
-            $req.Method = 'POST'
-            $req.AllowWriteStreamBuffering = $true
-            $req.SendChunked = $false
-            $req.KeepAlive = $true
-            
-
-            # Set the proper headers.
-            $headers = New-Object -TypeName System.Net.WebHeaderCollection
-            $req.Headers = $headers
-            # Prep the POST Headers for the message
-            $req.Headers.Add('X-Cookie',"token=$($connection.token)")
-            $req.Headers.Add('X-Requested-With','XMLHttpRequest')
-            $req.Headers.Add('Accept-Language: en-US')
-            #$req.Headers.Add('Accept-Encoding: gzip,deflate')
-            $req.UserAgent = "Mozilla/5.0 (Windows NT 6.3; WOW64; Trident/7.0; Touch; rv:11.0) like Gecko')"
-            $boundary = '------' + [DateTime]::Now.Ticks.ToString('x')
-            $req.ContentType = 'multipart/form-data; boundary=' + $boundary
-            [byte[]]$boundarybytes = [System.Text.Encoding]::UTF8.GetBytes($boundary + "`r`n")
-            [string]$formdataTemplate = '--' + $boundary 
-            [string]$formitem = [string]::Format($formdataTemplate, 'Filename', $fileinfo.name)
-            [byte[]]$formitembytes = [System.Text.Encoding]::UTF8.GetBytes($formitem)
-            
-            # Headder
-            [string]$headerTemplate = "Content-Disposition: form-data; name=`"{0}`"; filename=`"{1}`"`r`nContent-Type: $($ContentType)`r`n`r`n"
-            [string]$header = [string]::Format($headerTemplate, 'Filedata', (get-item $file).name)
-            [byte[]]$headerbytes = [System.Text.Encoding]::UTF8.GetBytes($header)
-
-            # Footer
-            [string]$footerTemplate = "`r`n" + $boundary + '--'
-            [byte[]]$footerBytes = [System.Text.Encoding]::UTF8.GetBytes($footerTemplate)
-
-
-            # Read the file and format the message
-            $stream = $req.GetRequestStream()
-            $rdr = new-object System.IO.FileStream($fileinfo.FullName, [System.IO.FileMode]::Open, [System.IO.FileAccess]::Read)
-            [byte[]]$buffer = new-object byte[] $rdr.Length
-            [int]$total = [int]$count = 0
-            $stream.Write($boundarybytes, 0, $boundarybytes.Length)
-            $stream.Write($headerbytes, 0,$headerbytes.Length)
-            $count = $rdr.Read($buffer, 0, $buffer.Length)
-            do{
-                $stream.Write($buffer, 0, $count)
-                $count = $rdr.Read($buffer, 0, $buffer.Length)
-            }while ($count > 0)
-            $stream.Write($footerBytes, 0, $footerBytes.Length)
-            $stream.close()
-
-            try
+            $RestClient = New-Object RestSharp.RestClient
+            $RestRequest = New-Object RestSharp.RestRequest
+            $RestClient.UserAgent = 'Posh-SSH'
+            $RestClient.BaseUrl = "https://192.168.1.211:8834"
+            $RestRequest.Method = [RestSharp.Method]::POST
+            $RestRequest.Resource = "file/upload"
+            $FilePath = $fileinfo.FullName
+            [void]$RestRequest.AddFile('Filedata',$FilePath, 'application/octet-stream')
+            [void]$RestRequest.AddHeader('X-Cookie', "token=$($Connection.Token)")
+            $result = $RestClient.Execute($RestRequest)
+            if ($result.ErrorMessage.Length -gt 0)
             {
-                # Upload the file
-                $response = $req.GetResponse()
-
-                # Read the response
-                $respstream = $response.GetResponseStream()
-                $sr = new-object System.IO.StreamReader $respstream
-                $result = $sr.ReadToEnd()
-                $sr.Close()
-                #$result.gettype()
-                #$UploadName = ConvertFrom-Json -InputObject $result
-                
-           }
-           catch
-           {
-                throw $_
-           }
-
-
-            $RestParams = New-Object -TypeName System.Collections.Specialized.OrderedDictionary
-            $RestParams.add('file', "$()")
-            if ($Encrypted)
-            {
-                $Credentials = New-Object System.Management.Automation.PSCredential -ArgumentList 'user', $Password
-                $RestParams.Add('password', $Credentials.GetNetworkCredential().Password)
+                Write-Error -Message $result.ErrorMessage
             }
-
-            $impParams = @{
-
-                
-                'Body' = $RestParams
+            else
+            {
+                $RestParams = New-Object -TypeName System.Collections.Specialized.OrderedDictionary
+                $RestParams.add('file', "$($fileinfo.name)")
+                if ($Encrypted)
+                {
+                    $Credentials = New-Object System.Management.Automation.PSCredential -ArgumentList 'user', $Password
+                    $RestParams.Add('password', $Credentials.GetNetworkCredential().Password)
                 }
+
+                $impParams = @{ 'Body' = $RestParams }
                 Invoke-RestMethod -Method Post -Uri "$($Connection.URI)/scans/import" -header @{'X-Cookie' = "token=$($Connection.Token)"} -Body (ConvertTo-Json @{'file' = $fileinfo.name;} -Compress) -ContentType 'application/json'
-               # InvokeNessusRestRequest -SessionObject $Connection -Path '/scans/import' -Method 'Post' -Parameter $RestParams
-            
+            }
         }
     }
     End{}
 }
-#>
+
 
 <#
 .Synopsis
