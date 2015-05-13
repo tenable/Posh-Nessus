@@ -5,7 +5,6 @@
 
 
 ## Scan 
-* Import-NessusScan - Import a nessus scan.
 * Set-NessusScanSchedule - Schedule a nessus scan.
 * New-NessusScan - Create a new nessus scan.
 

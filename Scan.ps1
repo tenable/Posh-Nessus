@@ -1611,6 +1611,8 @@ function Import-NessusScan
                 }
             }
         }
+
+        $origin = New-Object -Type DateTime -ArgumentList 1970, 1, 1, 0, 0, 0, 0
     }
     Process
     {
@@ -1658,7 +1660,32 @@ function Import-NessusScan
                 }
 
                 $impParams = @{ 'Body' = $RestParams }
-                Invoke-RestMethod -Method Post -Uri "$($Connection.URI)/scans/import" -header @{'X-Cookie' = "token=$($Connection.Token)"} -Body (ConvertTo-Json @{'file' = $fileinfo.name;} -Compress) -ContentType 'application/json'
+                $ImportResult = Invoke-RestMethod -Method Post -Uri "$($Connection.URI)/scans/import" -header @{'X-Cookie' = "token=$($Connection.Token)"} -Body (ConvertTo-Json @{'file' = $fileinfo.name;} -Compress) -ContentType 'application/json'
+                if ($ImportResult.scan -ne $null)
+                {
+                    $scan = $ImportResult.scan
+                    $ScanProps = [ordered]@{}
+                    $ScanProps.add('Name', $scan.name)
+                    $ScanProps.add('ScanId', $scan.id)
+                    $ScanProps.add('Status', $scan.status)
+                    $ScanProps.add('Enabled', $scan.enabled)
+                    $ScanProps.add('FolderId', $scan.folder_id)
+                    $ScanProps.add('Owner', $scan.owner)
+                    $ScanProps.add('UserPermission', $PermissionsId2Name[$scan.user_permissions])
+                    $ScanProps.add('Rules', $scan.rrules)
+                    $ScanProps.add('Shared', $scan.shared)
+                    $ScanProps.add('TimeZone', $scan.timezone)
+                    $ScanProps.add('CreationDate', $origin.AddSeconds($scan.creation_date).ToLocalTime())
+                    $ScanProps.add('LastModified', $origin.AddSeconds($scan.last_modification_date).ToLocalTime())
+                    $ScanProps.add('StartTime', $origin.AddSeconds($scan.starttime).ToLocalTime())
+                    $ScanProps.add('Scheduled', $scan.control)
+                    $ScanProps.add('DashboardEnabled', $scan.use_dashboard)
+                    $ScanProps.Add('SessionId', $Connection.SessionId)
+                    
+                    $ScanObj = New-Object -TypeName psobject -Property $ScanProps
+                    $ScanObj.pstypenames[0] = 'Nessus.Scan'
+                    $ScanObj
+               }
             }
         }
     }
