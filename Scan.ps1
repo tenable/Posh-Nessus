@@ -1583,12 +1583,12 @@ function Import-NessusScan
         if($Encrypted)
         {
             $ContentType = 'application/octet-stream'
-            $URIPath = '/file/upload?no_enc=1'
+            $URIPath = 'file/upload?no_enc=1'
         }
         else
         {
             $ContentType = 'application/octet-stream'
-            $URIPath = '/file/upload'
+            $URIPath = 'file/upload'
         }
 
         $netAssembly = [Reflection.Assembly]::GetAssembly([System.Net.Configuration.SettingsSection])
@@ -1632,13 +1632,14 @@ function Import-NessusScan
         foreach($Connection in $ToProcess)
         {
             $fileinfo = Get-ItemProperty -Path $File
+            $FilePath = $fileinfo.FullName
             $RestClient = New-Object RestSharp.RestClient
             $RestRequest = New-Object RestSharp.RestRequest
             $RestClient.UserAgent = 'Posh-SSH'
-            $RestClient.BaseUrl = "https://192.168.1.211:8834"
+            $RestClient.BaseUrl = $Connection.uri
             $RestRequest.Method = [RestSharp.Method]::POST
-            $RestRequest.Resource = "file/upload"
-            $FilePath = $fileinfo.FullName
+            $RestRequest.Resource = $URIPath
+            
             [void]$RestRequest.AddFile('Filedata',$FilePath, 'application/octet-stream')
             [void]$RestRequest.AddHeader('X-Cookie', "token=$($Connection.Token)")
             $result = $RestClient.Execute($RestRequest)
