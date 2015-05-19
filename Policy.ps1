@@ -498,4 +498,67 @@ function Import-NessusPolicy
     }
     End{}
 }
+
+
+<#
+.Synopsis
+   Short description
+.DESCRIPTION
+   Long description
+.EXAMPLE
+   Example of how to use this cmdlet
+.EXAMPLE
+   Another example of how to use this cmdlet
+#>
+function Get-NessusPolicyDetail
+{
+    [CmdletBinding()]
+    Param
+    (
+        # Nessus session Id
+        [Parameter(Mandatory=$true,
+                   Position=0,
+                   ValueFromPipelineByPropertyName=$true)]
+        [Alias('Index')]
+        [int32[]]
+        $SessionId = @(),
+
+        [Parameter(Mandatory=$true,
+                   Position=1,
+                   ValueFromPipelineByPropertyName=$true)]
+        [int32]
+        $PolicyId
+    )
+
+    Begin
+    {
+    }
+    Process
+    {
+        $ToProcess = @()
+
+        foreach($i in $SessionId)
+        {
+            $Connections = $Global:NessusConn
+            
+            foreach($Connection in $Connections)
+            {
+                if ($Connection.SessionId -eq $i)
+                {
+                    $ToProcess += $Connection
+                }
+            }
+        }
+
+        foreach($Connection in $ToProcess)
+        {
+            Write-Verbose -Message "Getting details for policy with id $($PolicyId)."
+            $Policy =  InvokeNessusRestRequest -SessionObject $Connection -Path "/policies/$($PolicyId)" -Method 'GET'
+            $Policy
+        }
+    }
+    End
+    {
+    }
+}
 #endregion

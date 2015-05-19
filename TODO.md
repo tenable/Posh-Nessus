@@ -9,7 +9,6 @@
 * New-NessusScan - Create a new nessus scan.
 
 ## Policy
-* Import-NessusPolicy - Import a nessus scan policy.
 * New-NessusPolicy - Create a new nessus scan policy.
 * Show-NessusPolicyDetails - Show details for a nessus scan policy..
 
