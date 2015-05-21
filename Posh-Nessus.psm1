@@ -36,6 +36,7 @@
  . "$PSScriptRoot\Server.ps1"
  . "$PSScriptRoot\Plugin.ps1"
  . "$PSScriptRoot\UserGroup.ps1"
+ . "$PSScriptRoot\Policy_Settings.ps1"
 
 
 # Supporting Functions
