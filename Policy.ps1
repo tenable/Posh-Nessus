@@ -532,8 +532,76 @@ function Get-NessusPolicyDetail
 
     Begin
     {
+        $ToProcess = @()
+
+        foreach($i in $SessionId)
+        {
+            $Connections = $Global:NessusConn
+            
+            foreach($Connection in $Connections)
+            {
+                if ($Connection.SessionId -eq $i)
+                {
+                    $ToProcess += $Connection
+                }
+            }
+        }
     }
     Process
+    {
+        
+
+        foreach($Connection in $ToProcess)
+        {
+            Write-Verbose -Message "Getting details for policy with id $($PolicyId)."
+            $Policy =  InvokeNessusRestRequest -SessionObject $Connection -Path "/policies/$($PolicyId)" -Method 'GET'
+            $Policy
+        }
+    }
+    End
+    {
+    }
+}
+
+
+<#
+.Synopsis
+   Short description
+.DESCRIPTION
+   Long description
+.EXAMPLE
+   Example of how to use this cmdlet
+.EXAMPLE
+   Another example of how to use this cmdlet
+#>
+function Add-NessusPolicyFTPCred
+{
+    [CmdletBinding()]
+    [OutputType([int])]
+    Param
+    (
+        # Nessus session Id
+        [Parameter(Mandatory=$true,
+                   Position=0,
+                   ValueFromPipelineByPropertyName=$true)]
+        [Alias('Index')]
+        [int32[]]
+        $SessionId = @(),
+
+        [Parameter(Mandatory=$true,
+                   Position=1,
+                   ValueFromPipelineByPropertyName=$true)]
+        [int32]
+        $PolicyId,
+
+        [Parameter(Mandatory=$true,
+                   Position=1,
+                   ValueFromPipelineByPropertyName=$true)]
+        [Management.Automation.PSCredential]
+        $Credential
+    )
+
+    Begin
     {
         $ToProcess = @()
 
@@ -549,12 +617,20 @@ function Get-NessusPolicyDetail
                 }
             }
         }
-
-        foreach($Connection in $ToProcess)
+    }
+    Process
+    {
+        foreach ($Session in $ToProcess)
         {
-            Write-Verbose -Message "Getting details for policy with id $($PolicyId)."
-            $Policy =  InvokeNessusRestRequest -SessionObject $Connection -Path "/policies/$($PolicyId)" -Method 'GET'
-            $Policy
+            $RequestParams = @{
+                'SessionObject' = $Session
+                'Path' = "/policies/$($PolicyId)"
+                'Method' = 'PUT'
+                'ContentType' = 'application/json'
+                'Parameter'= "{'uuid':'ad629e16-03b6-8c1d-cef6-ef8c9dd3c658d24bd260ef5f9e66','credentials': {'add': {'Plaintext Authentication':{'FTP':{'username':'charlie','password':'nessus@nessus.org'}}}, 'edit': {}, 'delete': {}}}"
+                
+            }
+            InvokeNessusRestRequest @RequestParams
         }
     }
     End

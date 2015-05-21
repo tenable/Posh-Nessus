@@ -22,10 +22,11 @@ function New-NessusSession
     Param
     (
         # Nessus Server IP Address or FQDN to connect to.
-        [Parameter(Mandatory=$true,
-                   ValueFromPipelineByPropertyName=$true,
-                   Position=0)]
-        [string[]]$ComputerName,
+        [Parameter(Mandatory = $true,
+                   ValueFromPipelineByPropertyName = $true,
+                   Position = 0)]
+        [string[]]
+        $ComputerName,
 
         # Port number of the Nessus web service. Default 8834
         [int]
@@ -33,9 +34,10 @@ function New-NessusSession
 
 
         # Credentials for connecting to the Nessus Server
-        [Parameter(Mandatory=$true,
-        Position=1)]
-        [Management.Automation.PSCredential]$Credentials
+        [Parameter(Mandatory = $true,
+        Position = 1)]
+        [Management.Automation.PSCredential]
+        $Credentials
     )
 
     Begin
@@ -128,9 +130,9 @@ function Get-NessusSession
     param(
 
         # Nessus session Id
-        [Parameter(Mandatory=$false,
+        [Parameter(Mandatory = $false,
                    ParameterSetName = 'Index',
-                   Position=0)]
+                   Position = 0)]
         [Alias('Index')]
         [int32[]]
         $SessionId = @()
