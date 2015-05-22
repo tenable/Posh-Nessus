@@ -464,3 +464,304 @@ function Disable-NessusPolicyPortScanner
     {
     }
 }
+
+
+<#
+.Synopsis
+   Get the local port enumeration settings for a policy.
+.DESCRIPTION
+   Get the local port enumeration settings for a policy. On Windows system Nessus uses
+   WMI to run and parse netstat information, on Linux and Unix host it uses SSH to run
+   and parse the netstat information. SNMP Can also be used to query the open port MIBs
+   for the different operating systems to avoid scanning the host.
+.EXAMPLE
+   Get-NessusPolicyLocalPortEnumeration -SessionId 0 -PolicyId 111
+
+
+    PolicyId             : 111
+    WMINetstat           : yes
+    SSHNetstat           : yes
+    SNMPScanner          : no
+    VerifyOpenPorts      : yes
+    ScanOnlyIfLocalFails : no
+#>
+function Get-NessusPolicyLocalPortEnumeration
+{
+    [CmdletBinding()]
+    [OutputType([int])]
+    Param
+    (
+        # Nessus session Id
+        [Parameter(Mandatory=$true,
+                   Position=0,
+                   ValueFromPipelineByPropertyName=$true)]
+        [Alias('Index')]
+        [int32]
+        $SessionId,
+
+        [Parameter(Mandatory=$true,
+                   Position=1,
+                   ValueFromPipelineByPropertyName=$true)]
+        [int32[]]
+        $PolicyId
+    )
+
+    Begin
+    {
+        $sessions = Get-NessusSession | Select-Object -ExpandProperty sessionid
+        if ($SessionId -notin $sessions)
+        {
+            throw "SessionId $($SessionId) is not present in the current sessions."
+        }
+        $Session = Get-NessusSession -SessionId $SessionId
+    }
+    Process
+    {
+        foreach ($PolicyToChange in $PolicyId)
+        {
+            try
+            {
+                $Policy = Get-NessusPolicyDetail -SessionId $Session.SessionId -PolicyId $PolicyToChange
+                $UpdateProps = [ordered]@{
+                    'PolicyId' = $PolicyToChange
+                    'WMINetstat' = $Policy.settings.wmi_netstat_scanner
+                    'SSHNetstat' = $Policy.settings.ssh_netstat_scanner
+                    'SNMPScanner' = $Policy.settings.snmp_scanner
+                    'VerifyOpenPorts' = $Policy.settings.verify_open_ports
+                    'ScanOnlyIfLocalFails' = $Policy.settings.only_portscan_if_enum_failed
+                }
+                $PolSettingsObj = [PSCustomObject]$UpdateProps
+                $PolSettingsObj.pstypenames.insert(0,'Nessus.PolicySetting')
+                $PolSettingsObj
+            }
+            catch
+            {
+                throw $_
+            }
+
+        }
+    }
+    End
+    {
+    }
+}
+
+<#
+.Synopsis
+   Enable the local port enumeration settings for a policy.
+.DESCRIPTION
+   Enable local port enumeration settings for a policy. On Windows system Nessus uses
+   WMI to run and parse netstat information, on Linux and Unix host it uses SSH to run
+   and parse the netstat information. SNMP Can also be used to query the open port MIBs
+   for the different operating systems to avoid scanning the host.
+.EXAMPLE
+   Enable-NessusPolicyLocalPortEnumeration -SessionId 0 -PolicyId 111 -ScanMethods WMINetstat,SNMPScanner,SSHNetstat -VerifyOpenPorts -ScanOnlyIfLocalFails
+
+
+    PolicyId             : 111
+    WMINetstat           : yes
+    SSHNetstat           : yes
+    SNMPScanner          : yes
+    VerifyOpenPorts      : yes
+    ScanOnlyIfLocalFails : yes
+#>
+function Enable-NessusPolicyLocalPortEnumeration
+{
+    [CmdletBinding()]
+    [OutputType([int])]
+    Param
+    (
+        # Nessus session Id
+        [Parameter(Mandatory = $true,
+                   Position = 0,
+                   ValueFromPipelineByPropertyName = $true)]
+        [Alias('Index')]
+        [int32]
+        $SessionId,
+
+        [Parameter(Mandatory = $true,
+                   Position = 1,
+                   ValueFromPipelineByPropertyName = $true)]
+        [int32[]]
+        $PolicyId,
+
+        [Parameter(Mandatory = $true,
+                   Position = 2,
+                   ValueFromPipelineByPropertyName = $true)]
+        [ValidateSet('WMINetstat', 'SSHNetstat', 'SNMPScanner')]
+        [string[]]
+        $ScanMethods,
+
+        [Parameter(Mandatory = $false,
+                   ValueFromPipelineByPropertyName = $true)]
+        [switch]
+        $VerifyOpenPorts,
+
+        [Parameter(Mandatory = $false,
+                   ValueFromPipelineByPropertyName = $true)]
+        [switch]
+        $ScanOnlyIfLocalFails
+    )
+
+    Begin
+    {
+        $sessions = Get-NessusSession | Select-Object -ExpandProperty sessionid
+        if ($SessionId -notin $sessions)
+        {
+            throw "SessionId $($SessionId) is not present in the current sessions."
+        }
+        $Session = Get-NessusSession -SessionId $SessionId
+
+        $Scanners = @{}
+        foreach ($Scanner in $ScanMethods)
+        {
+            if($Scanner -eq 'WMINetstat')
+            {$Scanners['wmi_netstat_scanner'] = 'yes'}
+
+            if($Scanner -eq 'SSHNetstat')
+            {$Scanners['ssh_netstat_scanner'] = 'yes'}
+
+            if($Scanner -eq 'SNMPScanner')
+            {$Scanners['snmp_scanner'] = 'yes'}
+        }
+
+        if($VerifyOpenPorts)
+        {$Scanners['verify_open_ports'] = 'yes'}
+
+        if($ScanOnlyIfLocalFails)
+        {$Scanners['only_portscan_if_enum_failed'] = 'yes'}
+
+        $Settings = @{'settings' = $Scanners}
+        $SettingsJson = ConvertTo-Json -InputObject $Settings -Compress
+    }
+    Process
+    {
+        foreach ($PolicyToChange in $PolicyId)
+        {
+            $RequestParams = @{
+                'SessionObject' = $Session
+                'Path' = "/policies/$($PolicyToChange)"
+                'Method' = 'PUT'
+                'ContentType' = 'application/json'
+                'Parameter'= $SettingsJson
+            }
+
+            InvokeNessusRestRequest @RequestParams | Out-Null
+            Get-NessusPolicyLocalPortEnumeration -SessionId $SessionId -PolicyId $PolicyToChange
+
+        }
+    }
+    End
+    {
+    }
+}
+
+<#
+.Synopsis
+   Disable the local port enumeration settings for a policy.
+.DESCRIPTION
+   Disable local port enumeration settings for a policy. On Windows system Nessus uses
+   WMI to run and parse netstat information, on Linux and Unix host it uses SSH to run
+   and parse the netstat information. SNMP Can also be used to query the open port MIBs
+   for the different operating systems to avoid scanning the host.
+.EXAMPLE
+   Disable-NessusPolicyLocalPortEnumeration -SessionId 0 -PolicyId 111 -ScanMethods SNMPScanner -ScanOnlyIfLocalFails
+
+
+    PolicyId             : 111
+    WMINetstat           : yes
+    SSHNetstat           : yes
+    SNMPScanner          : no
+    VerifyOpenPorts      : yes
+    ScanOnlyIfLocalFails : no
+#>
+function Disable-NessusPolicyLocalPortEnumeration
+{
+    [CmdletBinding()]
+    [OutputType([int])]
+    Param
+    (
+        # Nessus session Id
+        [Parameter(Mandatory = $true,
+                   Position = 0,
+                   ValueFromPipelineByPropertyName = $true)]
+        [Alias('Index')]
+        [int32]
+        $SessionId,
+
+        [Parameter(Mandatory = $true,
+                   Position = 1,
+                   ValueFromPipelineByPropertyName = $true)]
+        [int32[]]
+        $PolicyId,
+
+        [Parameter(Mandatory = $true,
+                   Position = 2,
+                   ValueFromPipelineByPropertyName = $true)]
+        [ValidateSet('WMINetstat', 'SSHNetstat', 'SNMPScanner')]
+        [string[]]
+        $ScanMethods,
+
+        [Parameter(Mandatory = $false,
+                   ValueFromPipelineByPropertyName = $true)]
+        [switch]
+        $VerifyOpenPorts,
+
+        [Parameter(Mandatory = $false,
+                   ValueFromPipelineByPropertyName = $true)]
+        [switch]
+        $ScanOnlyIfLocalFails
+    )
+
+    Begin
+    {
+        $sessions = Get-NessusSession | Select-Object -ExpandProperty sessionid
+        if ($SessionId -notin $sessions)
+        {
+            throw "SessionId $($SessionId) is not present in the current sessions."
+        }
+        $Session = Get-NessusSession -SessionId $SessionId
+
+        $Scanners = @{}
+        foreach ($Scanner in $ScanMethods)
+        {
+            if($Scanner -eq 'WMINetstat')
+            {$Scanners['wmi_netstat_scanner'] = 'no'}
+
+            if($Scanner -eq 'SSHNetstat')
+            {$Scanners['ssh_netstat_scanner'] = 'no'}
+
+            if($Scanner -eq 'SNMPScanner')
+            {$Scanners['snmp_scanner'] = 'no'}
+        }
+
+        if($VerifyOpenPorts)
+        {$Scanners['verify_open_ports'] = 'no'}
+
+        if($ScanOnlyIfLocalFails)
+        {$Scanners['only_portscan_if_enum_failed'] = 'no'}
+
+        $Settings = @{'settings' = $Scanners}
+        $SettingsJson = ConvertTo-Json -InputObject $Settings -Compress
+    }
+    Process
+    {
+        foreach ($PolicyToChange in $PolicyId)
+        {
+            $RequestParams = @{
+                'SessionObject' = $Session
+                'Path' = "/policies/$($PolicyToChange)"
+                'Method' = 'PUT'
+                'ContentType' = 'application/json'
+                'Parameter'= $SettingsJson
+            }
+
+            InvokeNessusRestRequest @RequestParams | Out-Null
+            Get-NessusPolicyLocalPortEnumeration -SessionId $SessionId -PolicyId $PolicyToChange
+
+        }
+    }
+    End
+    {
+    }
+}
