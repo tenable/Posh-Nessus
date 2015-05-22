@@ -532,8 +532,83 @@ function Get-NessusPolicyDetail
 
     Begin
     {
+        $ToProcess = @()
+
+        foreach($i in $SessionId)
+        {
+            $Connections = $Global:NessusConn
+            
+            foreach($Connection in $Connections)
+            {
+                if ($Connection.SessionId -eq $i)
+                {
+                    $ToProcess += $Connection
+                }
+            }
+        }
     }
     Process
+    {
+        
+
+        foreach($Connection in $ToProcess)
+        {
+            Write-Verbose -Message "Getting details for policy with id $($PolicyId)."
+            $Policy =  InvokeNessusRestRequest -SessionObject $Connection -Path "/policies/$($PolicyId)" -Method 'GET'
+            $Policy
+        }
+    }
+    End
+    {
+    }
+}
+
+
+<#
+.Synopsis
+   Short description
+.DESCRIPTION
+   Long description
+.EXAMPLE
+   Example of how to use this cmdlet
+.EXAMPLE
+   Another example of how to use this cmdlet
+#>
+function New-NessusPolicy
+{
+    [CmdletBinding()]
+    Param
+    (
+        # Nessus session Id.
+        [Parameter(Mandatory = $true,
+                   Position = 0,
+                   ValueFromPipelineByPropertyName = $true)]
+        [Alias('Index')]
+        [int32[]]
+        $SessionId = @(),
+
+        # Name for new policy.
+        [Parameter(Mandatory = $true,
+                   Position = 1,
+                   ValueFromPipelineByPropertyName = $true)]
+        [string]
+        $Name,
+
+        # Policy UUID to base new policy from.
+        [Parameter(Mandatory = $true,
+                   Position = 2,
+                   ValueFromPipelineByPropertyName = $true)]
+        [string]
+        $PolicyUUID,
+
+        # Description for new policy.
+        [Parameter(Mandatory = $false,
+                   ValueFromPipelineByPropertyName = $true)]
+        [string]
+        $Description = ''
+    )
+
+    Begin
     {
         $ToProcess = @()
 
@@ -549,12 +624,26 @@ function Get-NessusPolicyDetail
                 }
             }
         }
-
+    }
+    Process
+    {
         foreach($Connection in $ToProcess)
         {
-            Write-Verbose -Message "Getting details for policy with id $($PolicyId)."
-            $Policy =  InvokeNessusRestRequest -SessionObject $Connection -Path "/policies/$($PolicyId)" -Method 'GET'
-            $Policy
+            $RequestSet = @{'uuid' = $PolicyUUID; 
+                'settings' = @{
+                    'name' = $Name
+                    'description' = $Description}
+            }
+
+            $SettingsJson = ConvertTo-Json -InputObject $RequestSet -Compress
+            $RequestParams = @{
+                'SessionObject' = $Connection
+                'Path' = "/policies/"
+                'Method' = 'POST'
+                'ContentType' = 'application/json'
+                'Parameter'= $SettingsJson
+            }
+            InvokeNessusRestRequest @RequestParams
         }
     }
     End
