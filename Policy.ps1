@@ -13,16 +13,33 @@
 #>
 function Get-NessusPolicy
 {
-    [CmdletBinding()]
+    [CmdletBinding(DefaultParameterSetName = 'All')]
     Param
     (
         # Nessus session Id
         [Parameter(Mandatory=$true,
                    Position=0,
-                   ValueFromPipelineByPropertyName=$true)]
+                   ValueFromPipelineByPropertyName=$true,
+                   ParameterSetName = 'All')]
+        [Parameter(ParameterSetName = 'ByName')]
+        [Parameter(ParameterSetName = 'ByID')]
         [Alias('Index')]
         [int32[]]
-        $SessionId = @()
+        $SessionId = @(),
+
+        [Parameter(Mandatory = $false,
+                   Position = 1,
+                   ValueFromPipelineByPropertyName = $true,
+                   ParameterSetName = 'ByName')]
+        [string]
+        $Name,
+
+        [Parameter(Mandatory = $false,
+                   Position = 1,
+                   ValueFromPipelineByPropertyName = $true,
+                   ParameterSetName = 'ByID')]
+        [string]
+        $PolicyID
     )
 
     Begin
@@ -53,7 +70,25 @@ function Get-NessusPolicy
 
             if ($Policies -is [psobject])
             {
-                foreach($Policy in $Policies.policies)
+                switch ($PSCmdlet.ParameterSetName)
+                {
+                    'ByName' 
+                    {
+                        $Policies2Proc = $Policies.policies | Where-Object {$_.name -eq $Name}
+                    }
+                
+                    'ByID' 
+                    {
+                        $Policies2Proc = $Policies.policies | Where-Object {$_.id -eq $PolicyID}
+                    }
+
+                    'All'
+                    {
+                        $Policies2Proc = $Policies.policies
+                    }
+                }
+
+                foreach($Policy in $Policies2Proc)
                 {
                     $PolProps = [ordered]@{}
                     $PolProps.Add('Name', $Policy.Name)
@@ -94,16 +129,33 @@ function Get-NessusPolicy
 #>
 function Get-NessusPolicyTemplate
 {
-    [CmdletBinding()]
+    [CmdletBinding(DefaultParameterSetName = 'All')]
     Param
     (
         # Nessus session Id
-        [Parameter(Mandatory=$true,
-                   Position=0,
-                   ValueFromPipelineByPropertyName=$true)]
+        [Parameter(Mandatory = $true,
+                   Position = 0,
+                   ValueFromPipelineByPropertyName = $true,
+                   ParameterSetName = 'All')]
+        [Parameter(ParameterSetName = 'ByName')]
+        [Parameter(ParameterSetName = 'ByUUID')]
         [Alias('Index')]
         [int32[]]
-        $SessionId = @()
+        $SessionId = @(),
+
+        [Parameter(Mandatory = $false,
+                   Position = 1,
+                   ValueFromPipelineByPropertyName = $true,
+                   ParameterSetName = 'ByName')]
+        [string]
+        $Name,
+
+        [Parameter(Mandatory = $false,
+                   Position = 1,
+                   ValueFromPipelineByPropertyName = $true,
+                   ParameterSetName = 'ByUUID')]
+        [string]
+        $PolicyUUID
 
     )
 
@@ -133,7 +185,25 @@ function Get-NessusPolicyTemplate
 
             if ($Templates -is [psobject])
             {
-                foreach($Template in $Templates.templates)
+                switch ($PSCmdlet.ParameterSetName)
+                {
+                    'ByName' 
+                    {
+                        $Templates2Proc = $Templates.templates | Where-Object {$_.name -eq $Name}
+                    }
+                
+                    'ByUUID' 
+                    {
+                        $Templates2Proc = $Templates.templates | Where-Object {$_.uuid -eq $PolicyUUID}
+                    }
+
+                    'All'
+                    {
+                        $Templates2Proc = $Templates.templates
+                    }
+                }
+                
+                foreach($Template in $Templates2Proc)
                 {
                     $TmplProps = [ordered]@{}
                     $TmplProps.add('Name', $Template.name)
@@ -643,7 +713,8 @@ function New-NessusPolicy
                 'ContentType' = 'application/json'
                 'Parameter'= $SettingsJson
             }
-            InvokeNessusRestRequest @RequestParams
+            $NewPolicy = InvokeNessusRestRequest @RequestParams
+            $NewPolicy
         }
     }
     End

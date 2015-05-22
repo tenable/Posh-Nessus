@@ -9,8 +9,9 @@
 * New-NessusScan - Create a new nessus scan.
 
 ## Policy
-* New-NessusPolicy - Create a new nessus scan policy.
-* Show-NessusPolicyDetails - Show details for a nessus scan policy..
+* Make functions work with Policy  Name as a parameterset.
+* Add functions for rest of settings.
+* Add functions to set credentials.
 
 ## Rules
 * Get-NessusRule - Returns the current user plugin rules.
