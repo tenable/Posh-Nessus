@@ -582,22 +582,32 @@ function Import-NessusPolicy
 #>
 function Get-NessusPolicyDetail
 {
-    [CmdletBinding()]
+    [CmdletBinding(DefaultParameterSetName = 'ByName')]
     Param
     (
         # Nessus session Id
         [Parameter(Mandatory=$true,
                    Position=0,
                    ValueFromPipelineByPropertyName=$true)]
+        [Parameter(ParameterSetName = 'ByName')]
+        [Parameter(ParameterSetName = 'ByID')]
         [Alias('Index')]
         [int32[]]
         $SessionId = @(),
 
         [Parameter(Mandatory=$true,
                    Position=1,
-                   ValueFromPipelineByPropertyName=$true)]
+                   ValueFromPipelineByPropertyName=$true,
+                   ParameterSetName = 'ByID')]
         [int32]
-        $PolicyId
+        $PolicyId,
+
+        [Parameter(Mandatory=$true,
+                   Position=1,
+                   ValueFromPipelineByPropertyName=$true,
+                   ParameterSetName = 'ByName')]
+        [string]
+        $Name
     )
 
     Begin
@@ -623,6 +633,22 @@ function Get-NessusPolicyDetail
 
         foreach($Connection in $ToProcess)
         {
+            switch ($PSCmdlet.ParameterSetName)
+            {
+                'ByName' 
+                {
+                    $Pol = Get-NessusPolicy -Name $Name -SessionId $Connection.SessionId
+                    if ($Pol -ne $null)
+                    {
+                        $PolicyId = $Pol.PolicyId
+                    }
+                    else
+                    {
+                        throw "Policy with name $($Name) was not found."
+                    }
+                }
+                
+            }
             Write-Verbose -Message "Getting details for policy with id $($PolicyId)."
             $Policy =  InvokeNessusRestRequest -SessionObject $Connection -Path "/policies/$($PolicyId)" -Method 'GET'
             $Policy
@@ -636,23 +662,39 @@ function Get-NessusPolicyDetail
 
 <#
 .Synopsis
-   Short description
+   Create a new policy based on a policy template.
 .DESCRIPTION
-   Long description
+   Create a new policy based on a policy template.
 .EXAMPLE
-   Example of how to use this cmdlet
-.EXAMPLE
-   Another example of how to use this cmdlet
+   New-NessusPolicy -SessionId 0 -Name "Dev Lab Scan Policy" -TemplateName advanced -Description "Policy for scanning devlopment lab"
+
+
+    Name           : Dev Lab Scan Policy
+    PolicyId       : 123
+    Description    : Policy for scanning devlopment lab
+    PolicyUUID     : ad629e16-03b6-8c1d-cef6-ef8c9dd3c658d24bd260ef5f9e66
+    Visibility     : private
+    Shared         : False
+    Owner          : carlos
+    UserId         : 2
+    NoTarget       : false
+    UserPermission : 128
+    Modified       : 5/21/2015 11:35:20 PM
+    Created        : 5/21/2015 11:35:20 PM
+    SessionId      : 0
+
 #>
 function New-NessusPolicy
 {
-    [CmdletBinding()]
+    [CmdletBinding(DefaultParameterSetName = 'ByName')]
     Param
     (
         # Nessus session Id.
         [Parameter(Mandatory = $true,
                    Position = 0,
                    ValueFromPipelineByPropertyName = $true)]
+        [Parameter(ParameterSetName = 'ByName')]
+        [Parameter(ParameterSetName = 'ByUUID')]
         [Alias('Index')]
         [int32[]]
         $SessionId = @(),
@@ -661,19 +703,32 @@ function New-NessusPolicy
         [Parameter(Mandatory = $true,
                    Position = 1,
                    ValueFromPipelineByPropertyName = $true)]
+        [Parameter(ParameterSetName = 'ByName')]
+        [Parameter(ParameterSetName = 'ByUUID')]
         [string]
         $Name,
 
-        # Policy UUID to base new policy from.
+        # Policy Template UUID to base new policy from.
         [Parameter(Mandatory = $true,
                    Position = 2,
-                   ValueFromPipelineByPropertyName = $true)]
+                   ValueFromPipelineByPropertyName = $true,
+                   ParameterSetName = 'ByUUID')]
         [string]
         $PolicyUUID,
+
+        # Policy Template name to base new policy from.
+        [Parameter(Mandatory = $true,
+                   Position = 2,
+                   ValueFromPipelineByPropertyName = $true,
+                   ParameterSetName = 'ByName')]
+        [string]
+        $TemplateName,
 
         # Description for new policy.
         [Parameter(Mandatory = $false,
                    ValueFromPipelineByPropertyName = $true)]
+        [Parameter(ParameterSetName = 'ByName')]
+        [Parameter(ParameterSetName = 'ByUUID')]
         [string]
         $Description = ''
     )
@@ -699,6 +754,28 @@ function New-NessusPolicy
     {
         foreach($Connection in $ToProcess)
         {
+            switch ($PSCmdlet.ParameterSetName)
+            {
+                'ByName' 
+                {
+                    $tmpl = Get-NessusPolicyTemplate -Name $TemplateName -SessionId $Connection.SessionId
+                    if ($tmpl -ne $null)
+                    {
+                        $PolicyUUID = $tmpl.PolicyUUID
+                    }
+                    else
+                    {
+                        throw "Template with name $($TemplateName) was not found."
+                    }
+                }
+                
+                'ByUUID' 
+                {
+                    $Templates2Proc = $Templates.templates | Where-Object {$_.uuid -eq $PolicyUUID}
+                }
+            }
+
+            
             $RequestSet = @{'uuid' = $PolicyUUID; 
                 'settings' = @{
                     'name' = $Name
@@ -714,7 +791,7 @@ function New-NessusPolicy
                 'Parameter'= $SettingsJson
             }
             $NewPolicy = InvokeNessusRestRequest @RequestParams
-            $NewPolicy
+            Get-NessusPolicy -PolicyID $NewPolicy.policy_id -SessionId $Connection.sessionid
         }
     }
     End
