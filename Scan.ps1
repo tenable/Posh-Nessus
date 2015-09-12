@@ -675,7 +675,7 @@ function Export-NessusScan
                    ValueFromPipelineByPropertyName=$true)]
         [ValidateSet('Vuln_Hosts_Summary', 'Vuln_By_Host', 
                      'Compliance_Exec', 'Remediations', 
-                     'Vuln_By_Plugin', 'Compliance')]
+                     'Vuln_By_Plugin', 'Compliance', 'All')]
         [string[]]
         $Chapters,
 
@@ -725,11 +725,23 @@ function Export-NessusScan
             $ExportParams.Add('format', $Format.ToLower())
         }
 
+        if($Chapters)
+        {
+            if ($Chapters -contains 'All') 
+            {
+                $ExportParams.Add('chapters', 'vuln_hosts_summary;vuln_by_host;compliance_exec;remediations;vuln_by_plugin;compliance')
+            }
+            else
+            {           
+                $ExportParams.Add('chapters',$Chapters.ToLower())
+            }       
+        }
+
         foreach($Connection in $ToProcess)
         {
             $path =  "/scans/$($ScanId)/export"
             Write-Verbose -Message "Exporting scan with Id of $($ScanId) in $($Format) format."
-            $FileID = InvokeNessusRestRequest -SessionObject $Connections -Path $path  -Method 'Post' -Parameter $ExportParams
+            $FileID = InvokeNessusRestRequest -SessionObject $Connection -Path $path  -Method 'Post' -Parameter $ExportParams
             if ($FileID -is [psobject])
             {
                 $FileStatus = ''
@@ -737,7 +749,7 @@ function Export-NessusScan
                 {
                     try
                     {
-                        $FileStatus = InvokeNessusRestRequest -SessionObject $Connections -Path "/scans/$($ScanId)/export/$($FileID.file)/status"  -Method 'Get'
+                        $FileStatus = InvokeNessusRestRequest -SessionObject $Connection -Path "/scans/$($ScanId)/export/$($FileID.file)/status"  -Method 'Get'
                         Write-Verbose -Message "Status of export is $($FileStatus.status)"
                     }
                     catch
@@ -749,7 +761,7 @@ function Export-NessusScan
                 if ($FileStatus.status -eq 'ready')
                 {
                     Write-Verbose -Message "Downloading report to $($OutFile)"
-                    InvokeNessusRestRequest -SessionObject $Connections -Path "/scans/$($ScanId)/export/$($FileID.file)/download" -Method 'Get' -OutFile $OutFile
+                    InvokeNessusRestRequest -SessionObject $Connection -Path "/scans/$($ScanId)/export/$($FileID.file)/download" -Method 'Get' -OutFile $OutFile
                 }
             }
         }
@@ -1373,6 +1385,7 @@ function New-NessusScan
             switch($PSCmdlet.ParameterSetName)
             {
                 'Tempplate'{
+                    Write-Verbose -Message "Using Template with UUID of $($PolicyUUID)"
                     $scanhash = [ordered]@{ 
                         'uuid' = $PolicyUUID
                         'settings' = $settings
@@ -1386,6 +1399,7 @@ function New-NessusScan
                     {
                         if ($Policy.PolicyId -eq $PolicyId)
                         {
+                            Write-Verbose -Message "Uising Poicy with UUID of $($Policy.PolicyUUID)"
                             $polUUID = $Policy.PolicyUUID
                         }
                     }
@@ -1631,14 +1645,14 @@ function Import-NessusScan
             }
         }
 
-        foreach($Connection in $ToProcess)
+        foreach($Conn in $ToProcess)
         {
             $fileinfo = Get-ItemProperty -Path $File
             $FilePath = $fileinfo.FullName
             $RestClient = New-Object RestSharp.RestClient
             $RestRequest = New-Object RestSharp.RestRequest
             $RestClient.UserAgent = 'Posh-SSH'
-            $RestClient.BaseUrl = $Connection.uri
+            $RestClient.BaseUrl = $Conn.uri
             $RestRequest.Method = [RestSharp.Method]::POST
             $RestRequest.Resource = $URIPath
             
@@ -1660,7 +1674,7 @@ function Import-NessusScan
                 }
 
                 $impParams = @{ 'Body' = $RestParams }
-                $ImportResult = Invoke-RestMethod -Method Post -Uri "$($Connection.URI)/scans/import" -header @{'X-Cookie' = "token=$($Connection.Token)"} -Body (ConvertTo-Json @{'file' = $fileinfo.name;} -Compress) -ContentType 'application/json'
+                $ImportResult = Invoke-RestMethod -Method Post -Uri "$($Conn.URI)/scans/import" -header @{'X-Cookie' = "token=$($Conn.Token)"} -Body (ConvertTo-Json @{'file' = $fileinfo.name;} -Compress) -ContentType 'application/json'
                 if ($ImportResult.scan -ne $null)
                 {
                     $scan = $ImportResult.scan
@@ -1680,7 +1694,7 @@ function Import-NessusScan
                     $ScanProps.add('StartTime', $origin.AddSeconds($scan.starttime).ToLocalTime())
                     $ScanProps.add('Scheduled', $scan.control)
                     $ScanProps.add('DashboardEnabled', $scan.use_dashboard)
-                    $ScanProps.Add('SessionId', $Connection.SessionId)
+                    $ScanProps.Add('SessionId', $Conn.SessionId)
                     
                     $ScanObj = New-Object -TypeName psobject -Property $ScanProps
                     $ScanObj.pstypenames[0] = 'Nessus.Scan'
