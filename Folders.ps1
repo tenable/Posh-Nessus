@@ -38,7 +38,14 @@ function Get-NessusFolder
                    ValueFromPipelineByPropertyName=$true)]
         [Alias('Index')]
         [int32[]]
-        $SessionId = @()
+        $SessionId = @(),
+
+        # Nessus session Id
+        [Parameter(Mandatory=$false,
+                   Position=1,
+                   ValueFromPipelineByPropertyName=$true)]
+        [string]
+        $Name
     )
 
     Begin
@@ -69,16 +76,36 @@ function Get-NessusFolder
             {
                 foreach ($folder in $Folders.folders)
                 {
-                    $FolderProps = [ordered]@{}
-                    $FolderProps.Add('Name', $folder.name)
-                    $FolderProps.Add('FolderId', $folder.id)
-                    $FolderProps.Add('Type', $folder.type)
-                    $FolderProps.Add('Default', $folder.default_tag)
-                    $FolderProps.Add('Unread', $folder.unread_count)
-                    $FolderProps.Add('SessionId', $Connection.SessionId)
-                    $FolderObj = New-Object -TypeName psobject -Property $FolderProps
-                    $FolderObj.pstypenames[0] = 'Nessus.Folder'
-                    $FolderObj
+                    if ($Name.Length -eq 0)
+                    {
+                        $FolderProps = [ordered]@{}
+                        $FolderProps.Add('Name', $folder.name)
+                        $FolderProps.Add('FolderId', $folder.id)
+                        $FolderProps.Add('Type', $folder.type)
+                        $FolderProps.Add('Default', $folder.default_tag)
+                        $FolderProps.Add('Unread', $folder.unread_count)
+                        $FolderProps.Add('SessionId', $Connection.SessionId)
+                        $FolderObj = New-Object -TypeName psobject -Property $FolderProps
+                        $FolderObj.pstypenames[0] = 'Nessus.Folder'
+                        $FolderObj
+                    }
+                    else
+                    {
+                        if ($folder.name -eq $Name)
+                        {
+                            $FolderProps = [ordered]@{}
+                            $FolderProps.Add('Name', $folder.name)
+                            $FolderProps.Add('FolderId', $folder.id)
+                            $FolderProps.Add('Type', $folder.type)
+                            $FolderProps.Add('Default', $folder.default_tag)
+                            $FolderProps.Add('Unread', $folder.unread_count)
+                            $FolderProps.Add('SessionId', $Connection.SessionId)
+                            $FolderObj = New-Object -TypeName psobject -Property $FolderProps
+                            $FolderObj.pstypenames[0] = 'Nessus.Folder'
+                            $FolderObj
+                            break
+                        }
+                    }
                 }
             }
         }

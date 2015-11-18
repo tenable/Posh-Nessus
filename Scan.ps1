@@ -1406,7 +1406,7 @@ function New-NessusScan
             $FNameAttributeCollection.Add($FNameParameterAttributePolicy)
             $FNameAttributeCollection.Add($FNameParameterAttributePolName)
             $FNameAttributeCollection.Add($FNameParameterAttributeTmplName)
-            $FolderNames = Get-NessusFolder -SessionId $SessionId | Select-Object -ExpandProperty Zone
+            $FolderNames = Get-NessusFolder -SessionId $SessionId | Select-Object -ExpandProperty Name
             $FnameValidateSetAttribute = New-Object System.Management.Automation.ValidateSetAttribute($FolderNames)
             $FNameAttributeCollection.Add($FnameValidateSetAttribute)
             $FNameRuntimeParameter = New-Object System.Management.Automation.RuntimeDefinedParameter($FNameParameterName, [string], $FNameAttributeCollection)
