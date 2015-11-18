@@ -1465,7 +1465,20 @@ function New-NessusScan
             'text_targets' = $Targets
         }
 
-        if ($FolderId) {$settings.Add('folder_id',$FolderId)}
+        if ($FolderId -or $FolderName)
+        {
+            if($FolderId -and $FolderName)
+            {
+                Write-Warning -Message 'Both FolderId and FolderName where specified. Using FolderName value.'
+                $FId = (Get-NessusFolder -SessionId $SessionId -Name $FolderName).FolderId
+                $settings.Add('folder_id',$FolderId)
+            }
+            else
+            {
+                if ($FolderId) {$settings.Add('folder_id',$FId)}
+                if ($FolderName) {$settings.Add('folder_id',(Get-NessusFolder -SessionId $SessionId -Name $FolderName).FolderId)}
+            }
+        }
         if ($ScannerId) {$settings.Add('scanner_id', $ScannerId)}
         if ($Email.Length -gt 0) {$settings.Add('emails', $emails)}
         if ($Description.Length -gt 0) {$settings.Add('description', $Description)}
@@ -1504,6 +1517,22 @@ function New-NessusScan
                         'uuid' = $polUUID
                         'settings' = $settings
                     }                      
+                }
+            }
+
+            'PolicyName'{
+                $TemplObj = Get-NessusPolicy -SessionId $SessionId -Name $TemplateName
+                $scanhash = [ordered]@{ 
+                    'uuid' = $TemplObj.PolicyUUID
+                    'settings' = $settings
+                }
+            }
+
+            'TemplateName'{
+                $TemplObj = Get-NessusPolicyTemplate -SessionId $SessionId -Name $TemplateName
+                $scanhash = [ordered]@{ 
+                    'uuid' = $TemplObj.PolicyUUID
+                    'settings' = $settings
                 }
             }
         }
