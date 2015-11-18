@@ -89,7 +89,7 @@ AliasesToExport = '*'
 # FileList = @()
 
 # Private data to pass to the module specified in RootModule/ModuleToProcess
-# PrivateData = ''
+# PrivateData = ""
 
 # HelpInfo URI of this module
 # HelpInfoURI = ''
