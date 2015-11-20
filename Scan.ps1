@@ -102,7 +102,7 @@ function Suspend-NessusScan
                 $ScanProps.add('StartTime', $origin.AddSeconds($scan.starttime).ToLocalTime())
                 $ScanProps.Add('SessionId', $Connection.SessionId)
                 $ScanObj = New-Object -TypeName psobject -Property $ScanProps
-                $ScanObj.pstypenames[0] = 'Nessus.RunningScan'
+                $ScanObj.pstypenames[0] = 'Nessus.RunninScan'
                 $ScanObj
             }
         }
@@ -1948,85 +1948,195 @@ function Set-NessusScanSchedule
         [int32]
         $SessionId = @(),
 
-        [string]
-        [Parameter(Mandatory=$true,
-                   ParameterSetName = 'Policy',
-                   ValueFromPipelineByPropertyName=$true)]
-        [ValidateSet('Once','Daily','Weekly','Monthly', 'Yearly')]
-        $Frequency,
+        [bool]
+        $Enabled = $true,
 
+        [bool]
+        $LaunchNow = $true,
+
+        # When to launch the scan.
+        [ValidateSet('Once', 'Daily', 'Weekly','Monthly', 'Yearly')]
+        [string]
+        $Launch,
+        
+
+        # Interval to execute the task. Value from 1 to 20.
         [Parameter(Mandatory=$false,
                    ParameterSetName = 'Policy',
-                   ValueFromPipelineByPropertyName=$true)]
+                   ValueFromPipelineByPropertyName = $true)]
+        [ValidateRange(1,20)]
         [Int]
         $Interval,
 
         [Parameter(Mandatory=$false,
                    ParameterSetName = 'Policy',
-                   ValueFromPipelineByPropertyName=$true)]
-        [string]
+                   ValueFromPipelineByPropertyName = $true)]
+        [string[]]
         [ValidateSet('Sunday', 'Monday', 'Tuesday', 'Wednesday',
                      'Thursday', 'Friday', 'Saturday')]
         $DayOfWeek,
 
-        [Parameter(Mandatory=$false,
+        # The starting time and date for the scan. Default 30min after command.
+        [Parameter(Mandatory = $false,
                    ParameterSetName = 'Policy',
-                   ValueFromPipelineByPropertyName=$true)]
+                   ValueFromPipelineByPropertyName = $true)]
         [datetime]
-        $StartTime 
+        $StartTime = (Get-Date).AddMinutes(30)
     )
     DynamicParam {
-        $RuntimeParameterDictionary = New-Object System.Management.Automation.RuntimeDefinedParameterDictionary
+        if ($SessionId -ge 0)
+        {
+            $RuntimeParameterDictionary = New-Object System.Management.Automation.RuntimeDefinedParameterDictionary
 
-        # Time Zone
-        $ZoneParameterName = 'TimeZone'
-        $ZoneAttributeCollection = New-Object System.Collections.ObjectModel.Collection[System.Attribute]
-        $ZoneParameterAttribute = New-Object System.Management.Automation.ParameterAttribute
-        $ZoneParameterAttribute.Mandatory = $true
-        $ZoneAttributeCollection.Add($ZoneParameterAttribute)
-        $zones = Get-NessusTimeZones -SessionId $SessionId | Select-Object -ExpandProperty Zone
-        $ZoneValidateSetAttribute = New-Object System.Management.Automation.ValidateSetAttribute($zones)
-        $ZoneAttributeCollection.Add($ZoneValidateSetAttribute)
-        $ZoneRuntimeParameter = New-Object System.Management.Automation.RuntimeDefinedParameter($ZoneParameterName, [string], $ZoneAttributeCollection)
-        $RuntimeParameterDictionary.Add($ZoneParameterName, $ZoneRuntimeParameter)
+            # Time Zone
+            $ZoneParameterName = 'TimeZone'
+            $ZoneAttributeCollection = New-Object System.Collections.ObjectModel.Collection[System.Attribute]
+            $ZoneParameterAttribute = New-Object System.Management.Automation.ParameterAttribute
+            $ZoneParameterAttribute.Mandatory = $true
+            $ZoneAttributeCollection.Add($ZoneParameterAttribute)
+            $zones = Get-NessusTimeZones -SessionId $SessionId | Select-Object -ExpandProperty Zone
+            $ZoneValidateSetAttribute = New-Object System.Management.Automation.ValidateSetAttribute($zones)
+            $ZoneAttributeCollection.Add($ZoneValidateSetAttribute)
+            $ZoneRuntimeParameter = New-Object System.Management.Automation.RuntimeDefinedParameter($ZoneParameterName, [string], $ZoneAttributeCollection)
+            $RuntimeParameterDictionary.Add($ZoneParameterName, $ZoneRuntimeParameter)
 
-        $ScanNameParameterName = 'ScanName'
-        $ScanNameAttributeCollection = New-Object System.Collections.ObjectModel.Collection[System.Attribute]
-        $ScanNameParameterAttribute = New-Object System.Management.Automation.ParameterAttribute
-        $ScanNameParameterAttribute.Mandatory = $true
-        $ScanNameAttributeCollection.Add($ScanNameParameterAttribute)
-        $scans = Get-NessusScan -SessionId $SessionId | Select-Object -ExpandProperty name
-        $ScanNameValidateSetAttribute = New-Object System.Management.Automation.ValidateSetAttribute($scans)
-        $ScanNameAttributeCollection.Add($ScanNameValidateSetAttribute)
-        $ScanNameRuntimeParameter = New-Object System.Management.Automation.RuntimeDefinedParameter($ScanNameParameterName, [string], $ScanNameAttributeCollection)
-        $RuntimeParameterDictionary.Add($ScanNameParameterName, $ScanNameRuntimeParameter)
+            $ScanNameParameterName = 'ScanName'
+            $ScanNameAttributeCollection = New-Object System.Collections.ObjectModel.Collection[System.Attribute]
+            $ScanNameParameterAttribute = New-Object System.Management.Automation.ParameterAttribute
+            $ScanNameParameterAttribute.Mandatory = $true
+            $ScanNameAttributeCollection.Add($ScanNameParameterAttribute)
+            $scans = Get-NessusScan -SessionId $SessionId | Select-Object -ExpandProperty name
+            $ScanNameValidateSetAttribute = New-Object System.Management.Automation.ValidateSetAttribute($scans)
+            $ScanNameAttributeCollection.Add($ScanNameValidateSetAttribute)
+            $ScanNameRuntimeParameter = New-Object System.Management.Automation.RuntimeDefinedParameter($ScanNameParameterName, [string], $ScanNameAttributeCollection)
+            $RuntimeParameterDictionary.Add($ScanNameParameterName, $ScanNameRuntimeParameter)
 
-        return $RuntimeParameterDictionary
+            return $RuntimeParameterDictionary
+        }
     }
     Begin
     {
-        $ScanId
+        $origin = New-Object -Type DateTime -ArgumentList 1970, 1, 1, 0, 0, 0, 0  
     }
     Process
     {
-        $jsonstr = @'
-{"uuid":"ad629e16-03b6-8c1d-cef6-ef8c9dd3c658d24bd260ef5f9e66","settings":{"text_targets":"192.168.1.2","file_targets":"","launch":"DAILY","enabled":true,"launch_now":false,"rrules":"FREQ=DAILY;INTERVAL=1","starttime":"20151118T123000","timezone":"America/Puerto_Rico"}}
-'@
-    $RequestParams = @{
-                'SessionObject' = (Get-NessusSession -SessionId 0)
-                'Path' = "/scans/16"
-                'Method' = 'PUT'
-                'ContentType' = 'application/json'
-                'Parameter'= $jsonstr
-            }
+        $ScanId = (Get-NessusScan -SessionId $SessionId -Name $PSBoundParameters.ScanName).ScanId
 
-                    $RequestParams1 = @{
+        $EditorRequestParams = @{
                 'SessionObject' = (Get-NessusSession -SessionId 0)
-                'Path' = "/editor/scan/16"
+                'Path' = "/editor/scan/$($ScanId)"
                 'Method' = 'GET'
                 'ContentType' = 'application/json'
+        }
+
+        $scanObj =InvokeNessusRestRequest @EditorRequestParams
+
+        $Targets = $scanObj.settings.basic.inputs | Where-Object {$_.id -eq "text_targets" } | Select-Object -ExpandProperty default
+
+        $UpdateHash = @{'uuid' = $scanObj.uuid}
+
+        $SettingsHash = @{
+            'launch_now' = $LaunchNow
+            'enabled' = $Enabled
+            'text_targets' = $Targets
+            'file_targets' = ''
+            'timezone' = $PSBoundParameters.TimeZone
+        }
+
+        if ($Launch.Length -gt 0){ $SettingsHash.Add('launch', ($Launch.ToUpper())) }
+        $Rule = ''
+        # Configure the rules
+        switch ($Launch)
+        {
+            # Create a rule when the interval is daily or yearly
+            {$_ -in 'Daily','Yearly'} {
+                if ($Interval -ge 1)
+                {
+                    $Rule = "FREQ=$($Launch.ToUpper());INTERVAL=$($Interval)"
+                }
+                else
+                {
+                    Write-Error -Message 'For launching a task daily or yearly a interval must me specified'
+                    return
+                }
             }
-            InvokeNessusRestRequest @RequestParams
+            
+            # Create a rule when the interval is weekly.
+            'Weekly'{
+                if (($DayOfWeek.Length -gt 0) -and ($Interval -ge 1))
+                {
+                    $EachDay = $DayOfWeek | Select-Object -Unique
+                    $WeekRule = 'BYDAY='
+                    if ($EachDay.length -gt 1)
+                    {
+                        $DayList = @()
+                        foreach($day in $EachDay)
+                        {
+                            $DayList += $day.Substring(0,2).ToUpper() 
+                        }
+                        $WeekRule = $WeekRule + $DayList -join ','
+                    }
+                    else
+                    {
+                        $WeekRule = $WeekRule + $EachDay[0].Substring(0,2).ToUpper()
+                    }
+                    $Rule = $WeekRule + "FREQ=WEEKLY;INTERVAL=$($Interval);"
+                }
+                else
+                {
+                    Write-Error -Message 'For launching a task weekly a day of the week and a interval must be specified.'
+                }
+            }
+
+            'Monthly'{
+            
+            }
+        }
+        $SettingsHash.Add('rrules',$Rule)
+        $UpdateHash.Add('settings',$SettingsHash)
+        $jsonstr = ConvertTo-Json -InputObject $UpdateHash -Compress
+
+        $RequestParams = @{
+            'SessionObject' = (Get-NessusSession -SessionId 0)
+            'Path' = "/scans/$($ScanId)"
+            'Method' = 'PUT'
+            'ContentType' = 'application/json'
+            'Parameter'= $jsonstr
+        }
+        $scan = invokenessusrestrequest @RequestParams
+
+        $ScanProps = [ordered]@{}
+        $ScanProps.add('Name', $scan.name)
+        $ScanProps.add('ScanId', $scan.id)
+        $ScanProps.add('Status', $scan.status)
+        $ScanProps.add('Enabled', $scan.enabled)
+        $ScanProps.add('FolderId', $scan.folder_id)
+        $ScanProps.add('Owner', $scan.owner)
+        $ScanProps.add('UserPermission', $PermissionsId2Name[$scan.user_permissions])
+        $ScanProps.add('Rules', $scan.rrules)
+        $ScanProps.add('Shared', $scan.shared)
+        $ScanProps.add('TimeZone', $scan.timezone)
+        $ScanProps.add('Scheduled', $scan.control)
+        $ScanProps.add('DashboardEnabled', $scan.use_dashboard)
+        $ScanProps.Add('SessionId', $Connection.SessionId)                 
+        $ScanProps.add('CreationDate', $origin.AddSeconds($scan.creation_date).ToLocalTime())
+        $ScanProps.add('LastModified', $origin.AddSeconds($scan.last_modification_date).ToLocalTime())
+
+        if ($scan.starttime -cnotlike "*T*")
+        {
+            $ScanProps.add('StartTime', $origin.AddSeconds($scan.starttime).ToLocalTime())
+        }
+        else
+        {
+            $StartTime = [datetime]::ParseExact($scan.starttime,"yyyyMMddTHHmmss",
+                            [System.Globalization.CultureInfo]::InvariantCulture,
+                            [System.Globalization.DateTimeStyles]::None)
+            $ScanProps.add('StartTime', $StartTime)
+        }
+        $ScanObj = New-Object -TypeName psobject -Property $ScanProps
+        $ScanObj.pstypenames[0] = 'Nessus.Scan'
+        $ScanObj
+                    
     }
     End
     {
