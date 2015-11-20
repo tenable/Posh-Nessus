@@ -1352,6 +1352,8 @@ function New-NessusScan
     )
 
     DynamicParam {
+        if ($SessionId -ge 0)
+        {
             $RuntimeParameterDictionary = New-Object System.Management.Automation.RuntimeDefinedParameterDictionary
 
             # FolderName
@@ -1403,6 +1405,7 @@ function New-NessusScan
             
             
             return $RuntimeParameterDictionary
+        }
     }
 
     Begin
@@ -1927,17 +1930,37 @@ function Get-NessusTimeZones
 
 <#
 .Synopsis
-   Short description
+   Set a schedule for a exiting scan.
 .DESCRIPTION
-   Long description
+   Set a schedule for a exiting scan. So that it runs:
+   * Once
+   * Daily
+   * Weekly
+   * Monthly
+   * Yearly
 .EXAMPLE
-   Example of how to use this cmdlet
+   Run scan once a day at noon
+
+   Set-NessusScanSchedule -SessionId 0 -TimeZone America/Puerto_Rico -ScanName test1 -Launch Daily -StartTime "12:00pm" -Enabled $true -Interval 1
+
 .EXAMPLE
-   Another example of how to use this cmdlet
+   Run scan weekly on monday, wednesday and fridays at midnigh.
+
+   Set-NessusScanSchedule -SessionId 0 -TimeZone America/Puerto_Rico -ScanName test1 -Launch Weekly -DayOfWeek Monday,Wednesday,Friday -StartTime 12:00am  -Interval 1
+
+.EXAMPLE
+   Run scan every month on the wednesday of the second week of the month.
+
+   Set-NessusScanSchedule -SessionId 0 -TimeZone America/Puerto_Rico -ScanName test1 -Launch Monthly -WeekOfMonth 2 -DayOfWeek Wednesday -Interval 1
+
+.EXAMPLE
+   Run scan every month on the 15th.
+
+   Set-NessusScanSchedule -SessionId 0 -TimeZone America/Puerto_Rico -ScanName test1 -Launch Monthly -DayOfMonth 15 -Interval 1
 #>
 function Set-NessusScanSchedule
 {
-    [CmdletBinding()]
+    [CmdletBinding(DefaultParameterSetName = 'Once')]
     Param
     (
         # Nessus session Id
@@ -1948,29 +1971,24 @@ function Set-NessusScanSchedule
         [int32]
         $SessionId = @(),
 
+        # Enable the scheduled action.
         [bool]
         $Enabled = $true,
 
-        [bool]
-        $LaunchNow = $true,
 
         # When to launch the scan.
+        [Parameter(Mandatory=$true)]
         [ValidateSet('Once', 'Daily', 'Weekly','Monthly', 'Yearly')]
         [string]
         $Launch,
         
 
         # Interval to execute the task. Value from 1 to 20.
-        [Parameter(Mandatory=$false,
-                   ParameterSetName = 'Policy',
-                   ValueFromPipelineByPropertyName = $true)]
         [ValidateRange(1,20)]
         [Int]
         $Interval,
 
-        [Parameter(Mandatory=$false,
-                   ParameterSetName = 'Policy',
-                   ValueFromPipelineByPropertyName = $true)]
+        # Specify the day of the week o run weekly or monthly schedules.
         [string[]]
         [ValidateSet('Sunday', 'Monday', 'Tuesday', 'Wednesday',
                      'Thursday', 'Friday', 'Saturday')]
@@ -1978,10 +1996,25 @@ function Set-NessusScanSchedule
 
         # The starting time and date for the scan. Default 30min after command.
         [Parameter(Mandatory = $false,
-                   ParameterSetName = 'Policy',
                    ValueFromPipelineByPropertyName = $true)]
         [datetime]
-        $StartTime = (Get-Date).AddMinutes(30)
+        $StartTime = (Get-Date).AddMinutes(30),
+
+        # Day of the month to run on monthly schedule.
+        [Parameter(Mandatory=$false,
+                   ValueFromPipelineByPropertyName = $true,
+                   ParameterSetName = 'MonthlyByDay')]
+        [ValidateRange(1,31)]
+        [Int]
+        $DayOfMonth,
+
+        # Week of the month to run on monthly schedule.
+        [Parameter(Mandatory=$false,
+                   ValueFromPipelineByPropertyName = $true,
+                   ParameterSetName = 'MonthlyByWeek')]
+        [ValidateRange(1,5)]
+        [Int]
+        $WeekOfMonth
     )
     DynamicParam {
         if ($SessionId -ge 0)
@@ -2041,6 +2074,7 @@ function Set-NessusScanSchedule
             'text_targets' = $Targets
             'file_targets' = ''
             'timezone' = $PSBoundParameters.TimeZone
+            'starttime' = $StartTime.ToString('yyyyMMddTHHmmss')
         }
 
         if ($Launch.Length -gt 0){ $SettingsHash.Add('launch', ($Launch.ToUpper())) }
@@ -2085,11 +2119,39 @@ function Set-NessusScanSchedule
                 else
                 {
                     Write-Error -Message 'For launching a task weekly a day of the week and a interval must be specified.'
+                    return
                 }
             }
 
             'Monthly'{
-            
+                $monthlyRule = "FREQ=MONTHLY;INTERVAL=$($Interval);"
+                switch($PSCmdlet.ParameterSetName)
+                {
+                    'MonthlyByDay' {
+                        if (($Interval -gt 0) -and ($DayOfMonth -gt 0))
+                        {
+                           $Rule = "FREQ=MONTHLY;INTERVAL=$($Interval);BYMONTHDAY=$($DayOfMonth)"
+                        }
+                        else
+                        {
+                            Write-Error -Message 'You need to specify an interval and day of the month'
+                            return
+                        }
+                    
+                    } 
+                    
+                    'MonthlyByWeek' {
+                        if (($Interval -gt 0) -and ($DayOfWeek -gt 0) -and ($WeekOfMonth -gt 0))
+                        {
+                            $Rule = "FREQ=MONTHLY;INTERVAL=$($Interval);BYDAY=$($WeekOfMonth)$($DayOfWeek[0].Substring(0,2).ToUpper())"
+                            
+                        }
+                    }
+                }
+            }
+
+            'Once' {
+                $Rule = 'FREQ=ONETIME'
             }
         }
         $SettingsHash.Add('rrules',$Rule)
@@ -2108,17 +2170,13 @@ function Set-NessusScanSchedule
         $ScanProps = [ordered]@{}
         $ScanProps.add('Name', $scan.name)
         $ScanProps.add('ScanId', $scan.id)
-        $ScanProps.add('Status', $scan.status)
         $ScanProps.add('Enabled', $scan.enabled)
-        $ScanProps.add('FolderId', $scan.folder_id)
         $ScanProps.add('Owner', $scan.owner)
         $ScanProps.add('UserPermission', $PermissionsId2Name[$scan.user_permissions])
         $ScanProps.add('Rules', $scan.rrules)
         $ScanProps.add('Shared', $scan.shared)
         $ScanProps.add('TimeZone', $scan.timezone)
-        $ScanProps.add('Scheduled', $scan.control)
-        $ScanProps.add('DashboardEnabled', $scan.use_dashboard)
-        $ScanProps.Add('SessionId', $Connection.SessionId)                 
+        $ScanProps.add('DashboardEnabled', $scan.use_dashboard)             
         $ScanProps.add('CreationDate', $origin.AddSeconds($scan.creation_date).ToLocalTime())
         $ScanProps.add('LastModified', $origin.AddSeconds($scan.last_modification_date).ToLocalTime())
 
