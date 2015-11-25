@@ -1930,9 +1930,9 @@ function Get-NessusTimeZones
 
 <#
 .Synopsis
-   Set a schedule for a exiting scan.
+   Set a schedule for a existing scan.
 .DESCRIPTION
-   Set a schedule for a exiting scan. So that it runs:
+   Set a schedule for a existing scan. So that it runs:
    * Once
    * Daily
    * Weekly
