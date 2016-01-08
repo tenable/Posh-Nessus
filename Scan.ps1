@@ -1449,7 +1449,7 @@ function New-NessusScan
         $PSCmdlet.ParameterSetName
         switch($PSCmdlet.ParameterSetName)
         {
-            'Tempplate'{
+            'Template'{
                 Write-Verbose -Message "Using Template with UUID of $($PolicyUUID)"
                 $scanhash = [ordered]@{ 
                     'uuid' = $PolicyUUID
@@ -1459,7 +1459,7 @@ function New-NessusScan
 
             'Policy'{
                 $polUUID = $null
-                $Policies = Get-NessusPolicy -SessionId $Connection.SessionId 
+                $Policies = Get-NessusPolicy -SessionId $SessionId 
                 foreach($Policy in $Policies)
                 {
                     if ($Policy.PolicyId -eq $PolicyId)
