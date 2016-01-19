@@ -886,16 +886,16 @@ function Show-NessusScanDetail
                     $hosts += $HostObj
                 } 
 
-                # Process hostory info.
-                foreach ($History in $ScanDetails.history)
+                # Process history info.
+                foreach ($ScanHistory in $ScanDetails.history)
                 {
                     $HistoryProps = [ordered]@{}
-                    $HistoryProps['HistoryId'] = $History.history_id
-                    $HistoryProps['UUID'] = $History.uuid
-                    $HistoryProps['Status'] = $History.status
-                    $HistoryProps['Type'] = $History.type
-                    $HistoryProps['CreationDate'] = $origin.AddSeconds($History.creation_date).ToLocalTime()
-                    $HistoryProps['LastModifiedDate'] = $origin.AddSeconds($History.last_modification_date).ToLocalTime()
+                    $HistoryProps['HistoryId'] = $ScanHistory.history_id
+                    $HistoryProps['UUID'] = $ScanHistory.uuid
+                    $HistoryProps['Status'] = $ScanHistory.status
+                    $HistoryProps['Type'] = $ScanHistory.type
+                    $HistoryProps['CreationDate'] = $origin.AddSeconds($ScanHistory.creation_date).ToLocalTime()
+                    $HistoryProps['LastModifiedDate'] = $origin.AddSeconds($ScanHistory.last_modification_date).ToLocalTime()
                     $HistObj = New-Object -TypeName psobject -Property $HistoryProps
                     $HistObj.pstypenames[0] = 'Nessus.Scan.History'
                     $history += $HistObj
