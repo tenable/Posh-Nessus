@@ -67,7 +67,7 @@ function New-NessusSession
 
         foreach($computer in $ComputerName)
         {
-            $URI = "https://$($computer):8834"
+            $URI = "https://$($computer):$($Port)"
             $RestMethodParams = @{
                 'Method' = 'Post'
                 'URI' =  "$($URI)/session"
