@@ -1552,6 +1552,81 @@ function Remove-NessusScan
 
 <#
 .Synopsis
+   Deletes a history result from a Nessus server scan.
+.DESCRIPTION
+   Deletes a history result from a Nessus server scan.
+.EXAMPLE
+    Remove-NessusScanHistory -SessionId 0 -ScanId 263 -HistoryId 1519 -Verbose
+	VERBOSE: Removing history Id (1519) from scan Id 263
+	VERBOSE: DELETE https://192.168.1.211:8834/scans/263/history/1519 with 0-byte payload
+	VERBOSE: received 0-byte response of content type
+    VERBOSE: History Removed
+    
+#>
+function Remove-NessusScanHistory
+{
+    [CmdletBinding()]
+    Param
+    (
+        # Nessus session Id
+        [Parameter(Mandatory=$true,
+                   Position=0,
+                   ValueFromPipelineByPropertyName=$true)]
+        [Alias('Index')]
+        [int32[]]
+        $SessionId = @(),
+
+        [Parameter(Mandatory=$true,
+                   Position=1,
+                   ValueFromPipelineByPropertyName=$true)]
+        [int32]
+        $ScanId,
+
+		[Parameter(Mandatory=$true,
+                   Position=2,
+                   ValueFromPipelineByPropertyName=$true)]
+        [int32]
+        $HistoryId
+    )
+
+    Begin{}
+    Process
+    {
+        $ToProcess = @()
+
+        foreach($i in $SessionId)
+        {
+            $Connections = $Global:NessusConn
+            
+            foreach($Connection in $Connections)
+            {
+                if ($Connection.SessionId -eq $i)
+                {
+                    $ToProcess += $Connection
+                }
+            }
+        }
+
+        foreach($Connection in $ToProcess)
+        {
+            Write-Verbose -Message "Removing history Id ($HistoryId) from scan Id $($ScanId)"
+            
+            $ScanHistoryDetails = InvokeNessusRestRequest -SessionObject $Connection -Path "/scans/$($ScanId)/history/$($HistoryId)" -Method 'Delete' -Parameter $Params
+
+            if ($ScanHistoryDetails -eq '')
+            {
+                Write-Verbose -Message 'History Removed'
+            }
+            
+            
+        }
+    }
+    End{}
+}
+
+
+<#
+.Synopsis
    Short description
 .DESCRIPTION
    Long description
