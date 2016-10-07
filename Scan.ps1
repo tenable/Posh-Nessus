@@ -431,7 +431,7 @@ function Start-NessusScan
 
         foreach($Connection in $ToProcess)
         {
-            $Scans =  InvokeNessusRestRequest -SessionObject $Connection -Path "/scans/$($ScanId)/launch" -Method 'Post' -Parameter $paramJson
+            $Scans =  InvokeNessusRestRequest -SessionObject $Connection -Path "/scans/$($ScanId)/launch" -Method 'Post' -Parameter $paramJson -ContentType 'application/json'
 
             if ($Scans -is [psobject])
             {
