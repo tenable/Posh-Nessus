@@ -12,7 +12,7 @@
 RootModule = '.\Posh-Nessus.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.1'
+ModuleVersion = '0.2'
 
 # ID used to uniquely identify this module
 GUID = '7cb6d5c3-230b-47ea-9ace-55d034ff3102'

@@ -98,3 +98,9 @@ Groups     :
 Connectors :
 
 ```
+
+# Change Log
+
+## Version: 0.2
+
+* Fixed issue when starting scan with alternate targets. Missing Content Type header.
