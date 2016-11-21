@@ -1381,6 +1381,7 @@ function New-NessusScan
             if ($Email.Length -gt 0) {$settings.Add('emails', $emails)}
             if ($Description.Length -gt 0) {$settings.Add('description', $Description)}
             if ($CreateDashboard) {$settings.Add('use_dashboard',$true)}
+            if ($PolicyId) {$settings.Add('policy_id',$PolicyId)}
 
             switch($PSCmdlet.ParameterSetName)
             {
