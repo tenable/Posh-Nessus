@@ -665,7 +665,7 @@ function Export-NessusScan
         [string]
         $Format,
 
-        [Parameter(Mandatory=$true,
+        [Parameter(Mandatory=$false,
                    ValueFromPipelineByPropertyName=$true)]
         [String]
         $OutFile,
@@ -739,7 +739,15 @@ function Export-NessusScan
 
         foreach($Connection in $ToProcess)
         {
-            $path =  "/scans/$($ScanId)/export"
+            if ($HistoryId)
+            {
+                $path =  "/scans/$($ScanId)/export?history_id=$($HistoryId)"
+            }
+            else
+            {
+                $path =  "/scans/$($ScanId)/export"
+            }
+
             Write-Verbose -Message "Exporting scan with Id of $($ScanId) in $($Format) format."
             $FileID = InvokeNessusRestRequest -SessionObject $Connection -Path $path  -Method 'Post' -Parameter $ExportParams
             if ($FileID -is [psobject])
@@ -758,7 +766,12 @@ function Export-NessusScan
                     }
                     Start-Sleep -Seconds 1
                 }
-                if ($FileStatus.status -eq 'ready')
+                if ($FileStatus.status -eq 'ready' -and $Format -eq 'CSV' -and $PSObject.IsPresent)
+                {
+                    Write-Verbose -Message "Converting report to PSObject"
+                    InvokeNessusRestRequest -SessionObject $Connection -Path "/scans/$($ScanId)/export/$($FileID.file)/download" -Method 'Get' | ConvertFrom-CSV
+                }
+                elseif ($FileStatus.status -eq 'ready')
                 {
                     Write-Verbose -Message "Downloading report to $($OutFile)"
                     InvokeNessusRestRequest -SessionObject $Connection -Path "/scans/$($ScanId)/export/$($FileID.file)/download" -Method 'Get' -OutFile $OutFile
