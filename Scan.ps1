@@ -671,6 +671,11 @@ function Export-NessusScan
         $OutFile,
 
         [Parameter(Mandatory=$false,
+                   ValueFromPipelineByPropertyName=$true)]
+        [Switch]
+        $PSObject,
+
+        [Parameter(Mandatory=$false,
                    Position=3,
                    ValueFromPipelineByPropertyName=$true)]
         [ValidateSet('Vuln_Hosts_Summary', 'Vuln_By_Host', 
