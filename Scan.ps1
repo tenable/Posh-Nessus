@@ -1306,7 +1306,7 @@ function New-NessusScan
 
         [Parameter(Mandatory=$true,
                    Position=2,
-                   ParameterSetName = 'Tempplate',
+                   ParameterSetName = 'Template',
                    ValueFromPipelineByPropertyName=$true)]
         [string]
         $PolicyUUID,
@@ -1403,7 +1403,7 @@ function New-NessusScan
 
             switch($PSCmdlet.ParameterSetName)
             {
-                'Tempplate'{
+                'Template'{
                     Write-Verbose -Message "Using Template with UUID of $($PolicyUUID)"
                     $scanhash = [ordered]@{ 
                         'uuid' = $PolicyUUID
