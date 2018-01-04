@@ -6,22 +6,24 @@ function Show-NessusPlugin
     (
         # Nessus session Id
         [Parameter(Mandatory=$true,
-                   Position=0,
-                   ValueFromPipelineByPropertyName=$true)]
+                Position=0,
+        ValueFromPipelineByPropertyName=$true)]
         [Alias('Index')]
         [int32[]]
         $SessionId = @(),
 
         [Parameter(Mandatory=$true,
-                   Position=1,
-                   ValueFromPipelineByPropertyName=$true)]
+                Position=1,
+        ValueFromPipelineByPropertyName=$true)]
         [int32]
         $PluginId
     )
 
     Begin
     {
+    
     }
+    
     Process
     {
         $ToProcess = @()
@@ -49,9 +51,18 @@ function Show-NessusPlugin
                 {
                     # Parse Attributes
                     $Attributes = [ordered]@{}
+
                     foreach($Attribute in $Plugin.attributes)
                     {
-                        $Attributes.add("$($Attribute.attribute_name)", "$($Attribute.attribute_value)")
+                        # Some attributes have multiple values, i.e. osvdb. This causes errors when adding duplicates
+                        If ($Attributes.Keys -contains $Attribute.attribute_name)
+                        {
+                            $Attributes[$Attribute.attribute_name] += ", $($Attribute.attribute_value)"
+                        }
+                        Else
+                        {
+                            $Attributes.add("$($Attribute.attribute_name)", "$($Attribute.attribute_value)")
+                        }
                     }
                     $PluginProps = [ordered]@{}
                     $PluginProps.Add('Name', $Plugin.name)
@@ -67,8 +78,10 @@ function Show-NessusPlugin
             }
         }
     }
+    
     End
     {
+    
     }
 }
 
@@ -191,3 +204,119 @@ function Show-NessusPluginFamilyDetails
     {
     }
 }
+
+
+function Get-NessusPluginRule
+{
+    [CmdletBinding()]
+    Param
+    (
+        # Nessus session Id
+        [Parameter(Mandatory=$true,
+                Position=0,
+        ValueFromPipelineByPropertyName=$true)]
+        [Alias('Index')]
+        [int32[]]
+        $SessionId = @(),
+        
+        [Parameter(Position=1,
+        ValueFromPipelineByPropertyName=$true)]
+        [int32]
+        $PluginId
+
+    )
+
+    Begin
+    {
+        
+        function Limit-PluginRule
+        {
+            Param
+            (
+                [Object] 
+                [Parameter(ValueFromPipeline=$true)]
+                $InputObject
+            )
+            
+            Process
+            {
+                if ($InputObject.Plugin_ID -eq $PluginId)
+                {
+                    $InputObject
+                }
+            }
+        }
+        
+
+        $ToProcess = @()
+
+        foreach($i in $SessionId)
+        {
+            $Connections = $Global:NessusConn
+            
+            foreach($Connection in $Connections)
+            {
+                if ($Connection.SessionId -eq $i)
+                {
+                    $ToProcess += $Connection
+                }
+            }
+        }
+        
+        $origin = New-Object -Type DateTime -ArgumentList 1970, 1, 1, 0, 0, 0, 0
+    }
+    
+    Process
+    {
+        foreach($Connection in $ToProcess)
+        {
+            $pRules =  InvokeNessusRestRequest -SessionObject $Connection -Path '/plugin-rules' -Method 'Get'
+
+            if ($pRules -is [psobject])
+            {
+                foreach($pRule in $pRules.plugin_rules)
+                {
+                    $dtExpiration = $null
+                    
+                    If ($pRule.date)
+                    {
+                        $dtExpiration = $origin.AddSeconds($pRule.date).ToLocalTime()
+                    }
+                    
+                    $objPluginDetails = Show-NessusPlugin -SessionId $SessionId -PluginId $pRule.plugin_id
+                    
+                    $pRuleProps = [Ordered]@{}
+                    $pRuleProps.add('ID', $pRule.id)
+                    $pRuleProps.add('Host', $pRule.host)
+                    $pRuleProps.add('Plugin_ID', $pRule.plugin_id)
+                    $pRuleProps.add('Plugin', $objPluginDetails.Name)
+                    $pRuleProps.add('Expiration', $dtExpiration)
+                    $pRuleProps.add('Type', $pRule.type)
+                    $pRuleProps.add('Owner', $pRule.owner)
+                    $pRuleProps.add('Owner_ID', $pRule.owner_id)
+                    $pRuleProps.add('Shared', $pRule.shared)
+                    $pRuleProps.add('Permissions', $pRule.user_permissions)
+                    $pRuleProps.add('SessionId', $Connection.SessionId)
+                    $pRuleObj = New-Object -TypeName psobject -Property $pRuleProps
+                    $pRuleObj.pstypenames[0] = 'Nessus.PluginRules'
+                    
+
+                    If ($PluginId)
+                    {
+                        $pRuleObj | Limit-PluginRule
+                    }
+                    Else
+                    {
+                        $pRuleObj
+                    }
+                }
+            }
+        }
+    }
+    
+    End
+    {
+    
+    }
+}
+
