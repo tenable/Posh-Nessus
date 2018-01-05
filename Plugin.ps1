@@ -208,6 +208,32 @@ function Show-NessusPluginFamilyDetails
 
 function Get-NessusPluginRule
 {
+    <#
+            .SYNOPSIS
+            Gets a list of all Nessus plugin rules
+
+            .DESCRIPTION
+            Gets a list of all Nessus plugin rules
+
+            .PARAMETER SessionId
+            ID of a valid Nessus session
+
+            .PARAMETER Detail
+            Does an additional lookup on each rule, to return the plugin name. Helpfule when reporting
+
+            .EXAMPLE
+            Get-NessusPluginRule -SessionId 0
+            Gets all defined plugin rules
+
+            .EXAMPLE
+            Get-NessusPluginRule -SessionId 0 -Detail
+            Gets all defined plugin rules with details
+
+            .OUTPUTS
+            Returns a PSObject with basic rule info, or returns PSObject with base info + plugin name
+    #>
+
+
     [CmdletBinding()]
     Param
     (
@@ -217,7 +243,7 @@ function Get-NessusPluginRule
         ValueFromPipelineByPropertyName=$true)]
         [Alias('Index')]
         [int32[]]
-        $SessionId = @(),
+        $SessionId,
         
         [Parameter(Position=1,
         ValueFromPipelineByPropertyName=$true)]
@@ -250,6 +276,14 @@ function Get-NessusPluginRule
             }
         }
         
+        $dicTypeRev = @{
+            'recast_critical' = 'Critical'
+            'recast_high' = 'High'
+            'recast_medium' = 'Medium'
+            'recast_low' = 'Low'
+            'recast_info' = 'Info'
+            'exclude' = 'Exclude'
+        }
 
         $ToProcess = @()
 
@@ -302,7 +336,7 @@ function Get-NessusPluginRule
                     }
                     
                     $pRuleProps.add('Expiration', $dtExpiration)
-                    $pRuleProps.add('Type', $pRule.type)
+                    $pRuleProps.add('Type', $dicTypeRev[$pRule.type])
                     $pRuleProps.add('Owner', $pRule.owner)
                     $pRuleProps.add('Owner_ID', $pRule.owner_id)
                     $pRuleProps.add('Shared', $pRule.shared)
@@ -310,7 +344,6 @@ function Get-NessusPluginRule
                     $pRuleProps.add('SessionId', $Connection.SessionId)
                     $pRuleObj = New-Object -TypeName psobject -Property $pRuleProps
                     $pRuleObj.pstypenames[0] = 'Nessus.PluginRules'
-                    
 
                     If ($PluginId)
                     {
@@ -334,6 +367,39 @@ function Get-NessusPluginRule
 
 function Add-NessusPluginRule
 {
+    <#
+            .SYNOPSIS
+            Creates a new Nessus plugin rule
+
+            .DESCRIPTION
+            Can be used to alter report output for various reasons. i.e. vulnerability acceptance, verified 
+            false-positive on non-credentialed scans, alternate mitigation in place, etc...
+
+            .PARAMETER SessionId
+            ID of a valid Nessus session
+
+            .PARAMETER PluginId
+            ID number of the plugin which would you like altered
+
+            .PARAMETER ComputerName
+            Name, IP address, or Wildcard (*), which defines the the host(s) affected by the rule
+
+            .PARAMETER Type
+            Severity level you would like future scan reports to display for the defined host(s)
+
+            .PARAMETER Expiration
+            Date/Time object, which defines the time you would like the rule to expire
+
+            .EXAMPLE
+            Add-NessusPluginRule -SessionId 0 -PluginId 15901 -ComputerName 'WebServer' -Type Critical
+            Creates a rule that changes the default severity of 'Medium', to 'Critical' for the defined computer and plugin ID
+
+            .EXAMPLE
+            $WebServers | % {Add-NessusPluginRule -SessionId 0 -PluginId 15901 -ComputerName $_ -Type Critical}
+            Creates a rule for a list computers, using the defined options
+    #>
+
+
     [CmdletBinding()]
     Param
     (
@@ -433,6 +499,39 @@ function Add-NessusPluginRule
 
 function Remove-NessusPluginRule
 {
+    <#
+            .SYNOPSIS
+            Removes a Nessus plugin rule
+
+            .DESCRIPTION
+            Can be used to clear a previously defined, scan report altering rule
+
+            .PARAMETER SessionId
+            ID of a valid Nessus session
+
+            .PARAMETER Id
+            ID number of the rule which would you like removed/deleted
+
+            .EXAMPLE
+            Remove-NessusPluginRule -SessionId 0 -Id 500
+            Will delete a plugin rule with an ID of 500
+
+            .EXAMPLE
+            Get-NessusPluginRule -SessionId 0 | Remove-NessusPluginRule
+            Will delete all rules
+
+            .EXAMPLE
+            Get-NessusPluginRule -SessionId 0 | ? {$_.Host -eq 'myComputer'} | Remove-NessusPluginRule
+            Will find all plugin rules that match the computer name, and delete them
+
+            .INPUTS
+            Can accept pipeline data from Get-NessusPluginRule 
+
+            .OUTPUTS
+            Empty, unless an error is received from the server
+    #>
+
+
     [CmdletBinding()]
     Param
     (
@@ -440,7 +539,7 @@ function Remove-NessusPluginRule
         [Parameter(Mandatory=$true, Position=0,
         ValueFromPipelineByPropertyName=$true)]
         [Alias('Index')]
-        [int32[]]
+        [int32]
         $SessionId,
         
         [Parameter(Mandatory=$true, Position=1,
@@ -472,6 +571,155 @@ function Remove-NessusPluginRule
         foreach($Connection in $ToProcess)
         {
             InvokeNessusRestRequest -SessionObject $Connection -Path ('/plugin-rules/{0}' -f $Id) -Method 'Delete'
+        }
+    }
+    
+    End
+    {
+    
+    }
+}
+
+
+function Edit-NessusPluginRule
+{
+    <#
+            .SYNOPSIS
+            Edits a Nessus plugin rule
+
+            .DESCRIPTION
+            Can be used to change a previously defined, scan report altering rule
+
+            .PARAMETER SessionId
+            ID of a valid Nessus session
+
+            .PARAMETER Id
+            ID number of the rule which would you like removed/deleted
+
+            .PARAMETER PluginId
+            ID number of the plugin which would you like altered
+
+            .PARAMETER ComputerName
+            Name, IP address, or Wildcard (*), which defines the the host(s) affected by the rule
+
+            .PARAMETER Type
+            Severity level you would like future scan reports to display for the defined host(s)
+
+            .PARAMETER Expiration
+            Date/Time object, which defines the time you would like the rule to expire. Not required
+            
+            .EXAMPLE
+            Edit-NessusPluginRule -SessionId 0 -Id 500 -ComputerName 'YourComputer' -Expiration (([datetime]::Now).AddDays(10)) -Type Low
+            Will edit a plugin rule with an ID of 500, to have a new computer name. Rule expires in 10 days
+
+            .EXAMPLE
+            Get-NessusPluginRule -SessionId 0 | Edit-NessusPluginRule -Type High
+            Will alter all rules to now have a serverity of 'Info'
+
+            .EXAMPLE
+            Get-NessusPluginRule -SessionId 0 | ? {$_.Host -eq 'myComputer'} | Edit-NessusPluginRule -Type 'High'
+            Will find all plugin rules that match the computer name, and set their severity to high
+
+            .INPUTS
+            Can accept pipeline data from Get-NessusPluginRule 
+
+            .OUTPUTS
+            Empty, unless an error is received from the server
+    #>
+
+
+    [CmdletBinding()]
+    Param
+    (
+        # Nessus session Id
+        [Parameter(Mandatory=$true, Position=0,
+        ValueFromPipelineByPropertyName=$true)]
+        [Alias('Index')]
+        [int32]
+        $SessionId,
+        
+        [Parameter(Mandatory=$true, Position=1,
+        ValueFromPipelineByPropertyName=$true)]
+        [int32]
+        $Id,
+        
+        [Parameter(Mandatory=$true, Position=2,
+        ValueFromPipelineByPropertyName=$true)]
+        [int32]
+        $PluginId,
+        
+        [Parameter(Mandatory=$false, Position=3,
+        ValueFromPipelineByPropertyName=$true)]
+        [Alias('IPAddress','IP','Host')]
+        [String]
+        $ComputerName = '*',
+        
+        [Parameter(Mandatory=$true, Position=4, 
+        ValueFromPipelineByPropertyName=$true)]
+        [ValidateSet('Critical','High','Medium','Low','Info','Exclude')]
+        [String]
+        $Type,
+        
+        [Parameter(Mandatory=$false, Position=5, 
+        ValueFromPipelineByPropertyName=$true)]
+        [datetime] 
+        $Expiration
+    )
+
+    Begin
+    {
+        $ToProcess = @()
+
+        foreach($i in $SessionId)
+        {
+            $Connections = $Global:NessusConn
+            
+            foreach($Connection in $Connections)
+            {
+                if ($Connection.SessionId -eq $i)
+                {
+                    $ToProcess += $Connection
+                }
+            }
+        }
+        
+        $origin = New-Object -Type DateTime -ArgumentList 1970, 1, 1, 0, 0, 0, 0
+    }
+    
+    Process
+    {
+        foreach($Connection in $ToProcess)
+        {
+            $dtExpiration = $null
+                    
+            If ($Expiration)
+            {
+                
+                $dtExpiration = (New-TimeSpan -Start $origin -End $Expiration).TotalSeconds.ToInt32($null)
+            }
+                    
+            $dicType = @{
+                'Critical' = 'recast_critical'
+                'High' = 'recast_high'
+                'Medium' = 'recast_medium'
+                'Low' = 'recast_low'
+                'Info' = 'recast_info'
+                'Exclude' = 'exclude'
+            }
+            
+            $strType = $dicType[$Type]
+            
+            $pRulehash = @{
+                'plugin_id' = $PluginId
+                'host' = $ComputerName
+                'type' = $strType
+                'date' = $dtExpiration
+            }
+            
+            $pRuleJson = ConvertTo-Json -InputObject $pRulehash -Compress
+
+            InvokeNessusRestRequest -SessionObject $Connection -Path ('/plugin-rules/{0}' -f $Id) -Method 'Put' `
+            -Parameter $pRuleJson -ContentType 'application/json'
         }
     }
     
