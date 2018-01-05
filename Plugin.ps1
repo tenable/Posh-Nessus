@@ -93,8 +93,8 @@ function Get-NessusPluginFamily
     (
         # Nessus session Id
         [Parameter(Mandatory=$true,
-                   Position=0,
-                   ValueFromPipelineByPropertyName=$true)]
+                Position=0,
+        ValueFromPipelineByPropertyName=$true)]
         [Alias('Index')]
         [int32[]]
         $SessionId = @()
@@ -152,15 +152,15 @@ function Show-NessusPluginFamilyDetails
     (
         # Nessus session Id
         [Parameter(Mandatory=$true,
-                   Position=0,
-                   ValueFromPipelineByPropertyName=$true)]
+                Position=0,
+        ValueFromPipelineByPropertyName=$true)]
         [Alias('Index')]
         [int32[]]
         $SessionId = @(),
 
         [Parameter(Mandatory=$true,
-                   Position=1,
-                   ValueFromPipelineByPropertyName=$true)]
+                Position=1,
+        ValueFromPipelineByPropertyName=$true)]
         [int]
         $FamilyId 
     )
@@ -283,13 +283,13 @@ function Get-NessusPluginRule
                         $dtExpiration = $origin.AddSeconds($pRule.date).ToLocalTime()
                     }
                     
-                    $objPluginDetails = Show-NessusPlugin -SessionId $SessionId -PluginId $pRule.plugin_id
+                    #$objPluginDetails = Show-NessusPlugin -SessionId $SessionId -PluginId $pRule.plugin_id
                     
                     $pRuleProps = [Ordered]@{}
                     $pRuleProps.add('ID', $pRule.id)
                     $pRuleProps.add('Host', $pRule.host)
-                    $pRuleProps.add('Plugin_ID', $pRule.plugin_id)
-                    $pRuleProps.add('Plugin', $objPluginDetails.Name)
+                    $pRuleProps.add('PluginID', $pRule.plugin_id)
+                    #$pRuleProps.add('Plugin', $objPluginDetails.Name)
                     $pRuleProps.add('Expiration', $dtExpiration)
                     $pRuleProps.add('Type', $pRule.type)
                     $pRuleProps.add('Owner', $pRule.owner)
