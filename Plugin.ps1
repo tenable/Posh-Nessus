@@ -222,7 +222,10 @@ function Get-NessusPluginRule
         [Parameter(Position=1,
         ValueFromPipelineByPropertyName=$true)]
         [int32]
-        $PluginId
+        $PluginId,
+        
+        [Switch]
+        $Detail
 
     )
 
@@ -283,13 +286,21 @@ function Get-NessusPluginRule
                         $dtExpiration = $origin.AddSeconds($pRule.date).ToLocalTime()
                     }
                     
-                    #$objPluginDetails = Show-NessusPlugin -SessionId $SessionId -PluginId $pRule.plugin_id
+                    
                     
                     $pRuleProps = [Ordered]@{}
                     $pRuleProps.add('ID', $pRule.id)
                     $pRuleProps.add('Host', $pRule.host)
-                    $pRuleProps.add('PluginID', $pRule.plugin_id)
-                    #$pRuleProps.add('Plugin', $objPluginDetails.Name)
+                    $pRuleProps.add('PluginId', $pRule.plugin_id)
+                    
+                    # Significant increase in web requests!
+                    If ($Detail)
+                    {
+                        # Provides the rule name in the returned object
+                        $objPluginDetails = Show-NessusPlugin -SessionId $SessionId -PluginId $pRule.plugin_id
+                        $pRuleProps.add('Plugin', $objPluginDetails.Name)
+                    }
+                    
                     $pRuleProps.add('Expiration', $dtExpiration)
                     $pRuleProps.add('Type', $pRule.type)
                     $pRuleProps.add('Owner', $pRule.owner)
@@ -320,3 +331,152 @@ function Get-NessusPluginRule
     }
 }
 
+
+function Add-NessusPluginRule
+{
+    [CmdletBinding()]
+    Param
+    (
+        # Nessus session Id
+        [Parameter(Mandatory=$true, Position=0,
+        ValueFromPipelineByPropertyName=$true)]
+        [Alias('Index')]
+        [int32[]]
+        $SessionId,
+        
+        [Parameter(Mandatory=$true, Position=1,
+        ValueFromPipelineByPropertyName=$true)]
+        [int32]
+        $PluginId,
+        
+        [Parameter(Mandatory=$false, Position=2,
+        ValueFromPipelineByPropertyName=$true)]
+        [Alias('IPAddress','IP','Host')]
+        [String]
+        $ComputerName = '*',
+        
+        [Parameter(Mandatory=$true, Position=3, 
+        ValueFromPipelineByPropertyName=$true)]
+        [ValidateSet('Critical','High','Medium','Low','Info','Exclude')]
+        [String]
+        $Type,
+        
+        [Parameter(Mandatory=$false, Position=4, 
+        ValueFromPipelineByPropertyName=$true)]
+        [datetime] 
+        $Expiration
+    )
+
+    Begin
+    {
+        $ToProcess = @()
+
+        foreach($i in $SessionId)
+        {
+            $Connections = $Global:NessusConn
+            
+            foreach($Connection in $Connections)
+            {
+                if ($Connection.SessionId -eq $i)
+                {
+                    $ToProcess += $Connection
+                }
+            }
+        }
+        
+        $origin = New-Object -Type DateTime -ArgumentList 1970, 1, 1, 0, 0, 0, 0
+    }
+    
+    Process
+    {
+        foreach($Connection in $ToProcess)
+        {
+            $dtExpiration = $null
+                    
+            If ($Expiration)
+            {
+                
+                $dtExpiration = (New-TimeSpan -Start $origin -End $Expiration).TotalSeconds.ToInt32($null)
+            }
+                    
+            $dicType = @{
+                'Critical' = 'recast_critical'
+                'High' = 'recast_high'
+                'Medium' = 'recast_medium'
+                'Low' = 'recast_low'
+                'Info' = 'recast_info'
+                'Exclude' = 'exclude'
+            }
+            
+            $strType = $dicType[$Type]
+            
+            $pRulehash = @{
+                'plugin_id' = $PluginId
+                'host' = $ComputerName
+                'type' = $strType
+                'date' = $dtExpiration
+            }
+            
+            $pRuleJson = ConvertTo-Json -InputObject $pRulehash -Compress
+
+            InvokeNessusRestRequest -SessionObject $Connection -Path '/plugin-rules' -Method 'Post' `
+            -Parameter $pRuleJson -ContentType 'application/json'
+        }
+    }
+    
+    End
+    {
+    
+    }
+}
+
+
+function Remove-NessusPluginRule
+{
+    [CmdletBinding()]
+    Param
+    (
+        # Nessus session Id
+        [Parameter(Mandatory=$true, Position=0,
+        ValueFromPipelineByPropertyName=$true)]
+        [Alias('Index')]
+        [int32[]]
+        $SessionId,
+        
+        [Parameter(Mandatory=$true, Position=1,
+        ValueFromPipelineByPropertyName=$true)]
+        [int32]
+        $Id
+    )
+
+    Begin
+    {
+        $ToProcess = @()
+
+        foreach($i in $SessionId)
+        {
+            $Connections = $Global:NessusConn
+            
+            foreach($Connection in $Connections)
+            {
+                if ($Connection.SessionId -eq $i)
+                {
+                    $ToProcess += $Connection
+                }
+            }
+        }
+    }
+    
+    Process
+    {
+        foreach($Connection in $ToProcess)
+        {
+            InvokeNessusRestRequest -SessionObject $Connection -Path ('/plugin-rules/{0}' -f $Id) -Method 'Delete'
+        }
+    }
+    
+    End
+    {
+    
+    }
+}
