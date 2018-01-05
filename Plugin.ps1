@@ -269,7 +269,7 @@ function Get-NessusPluginRule
             
             Process
             {
-                if ($InputObject.Plugin_ID -eq $PluginId)
+                if ($InputObject.PluginID -eq $PluginId)
                 {
                     $InputObject
                 }
@@ -660,9 +660,9 @@ function Edit-NessusPluginRule
         [String]
         $Type,
         
-        [Parameter(Mandatory=$false, Position=5, 
+        [Parameter(Mandatory=$false, Position=5,
         ValueFromPipelineByPropertyName=$true)]
-        [datetime] 
+        [Object] #TODO: Validate the Expiratoin date, but still allow nulls
         $Expiration
     )
 
@@ -695,7 +695,7 @@ function Edit-NessusPluginRule
             If ($Expiration)
             {
                 
-                $dtExpiration = (New-TimeSpan -Start $origin -End $Expiration).TotalSeconds.ToInt32($null)
+                $dtExpiration = (New-TimeSpan -Start $origin -End $Expiration -ErrorAction SilentlyContinue).TotalSeconds.ToInt32($null)
             }
                     
             $dicType = @{
@@ -713,10 +713,16 @@ function Edit-NessusPluginRule
                 'plugin_id' = $PluginId
                 'host' = $ComputerName
                 'type' = $strType
-                'date' = $dtExpiration
+            }
+            
+            If ($dtExpiration)
+            {
+                $pRulehash.Add('date',$dtExpiration)
             }
             
             $pRuleJson = ConvertTo-Json -InputObject $pRulehash -Compress
+            
+            $pRuleJson
 
             InvokeNessusRestRequest -SessionObject $Connection -Path ('/plugin-rules/{0}' -f $Id) -Method 'Put' `
             -Parameter $pRuleJson -ContentType 'application/json'
