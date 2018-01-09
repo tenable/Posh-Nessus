@@ -62,7 +62,11 @@ function New-NessusSession
             # Disable SSL certificate validation
             [System.Net.ServicePointManager]::CertificatePolicy = New-Object IgnoreCerts
         }
-
+        
+        # Force usage of TSL1.2 as Nessus web server only supports this and will hang otherwise
+        # Source: https://stackoverflow.com/questions/32355556/powershell-invoke-restmethod-over-https
+        [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+        
         $SessionProps = New-Object -TypeName System.Collections.Specialized.OrderedDictionary
 
         foreach($computer in $ComputerName)
