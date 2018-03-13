@@ -1,4 +1,4 @@
-﻿
+
 #region Session
 
 <#
@@ -18,7 +18,7 @@
 #>
 function New-NessusSession
 {
-    [CmdletBinding()]
+    [CmdletBinding(DefaultParameterSetName='Credentials')]
     Param
     (
         # Nessus Server IP Address or FQDN to connect to.
@@ -34,13 +34,24 @@ function New-NessusSession
 
         # Credentials for connecting to the Nessus Server
         [Parameter(Mandatory=$true,
-        Position=1)]
-        [Management.Automation.PSCredential]$Credentials
+        Position=1,
+        ParameterSetName='Credentials')]
+        [Management.Automation.PSCredential]$Credentials,
+
+        # API keys (alternative to Credentials)
+        [Parameter(Mandatory=$true,
+        Position=1,
+        ParameterSetName='API')]
+        [String]$AccessKey,
+
+        [Parameter(Mandatory=$true,
+        Position=2,
+        ParameterSetName='API')]
+        [String]$SecretKey
     )
 
     Begin
     {
-        
     }
     Process
     {
@@ -62,37 +73,60 @@ function New-NessusSession
             # Disable SSL certificate validation
             [System.Net.ServicePointManager]::CertificatePolicy = New-Object IgnoreCerts
         }
-        
-        # Force usage of TSL1.2 as Nessus web server only supports this and will hang otherwise
-        # Source: https://stackoverflow.com/questions/32355556/powershell-invoke-restmethod-over-https
-        [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-        
+
         $SessionProps = New-Object -TypeName System.Collections.Specialized.OrderedDictionary
 
         foreach($computer in $ComputerName)
         {
             $URI = "https://$($computer):$($Port)"
-            $RestMethodParams = @{
-                'Method' = 'Post'
-                'URI' =  "$($URI)/session"
-                'Body' = @{'username' = $Credentials.UserName; 'password' = $Credentials.GetNetworkCredential().password}
-                'ErrorVariable' = 'NessusLoginError'
+
+            # Generate a session if credentials are used
+            if ($Credentials) {
+                $RestMethodParams = @{
+                    'Method' = 'Post'
+                    'URI' =  "$($URI)/session"
+                    'Body' = @{'username' = $Credentials.UserName; 'password' = $Credentials.GetNetworkCredential().password}
+                    'ErrorVariable' = 'NessusLoginError'
+                }
+                $TokenResponse = Invoke-RestMethod @RestMethodParams
+                if ($TokenResponse) {
+                    $SessionProps.add('URI', $URI)
+                    $SessionProps.Add('Credentials',$Credentials)
+                    $SessionProps.add('Token',$TokenResponse.token)
+                    $SessionIndex = $Global:NessusConn.Count
+                    $SessionProps.Add('SessionId', $SessionIndex)
+                    $sessionobj = New-Object -TypeName psobject -Property $SessionProps
+                    $sessionobj.pstypenames[0] = 'Nessus.Session'
+
+                    [void]$Global:NessusConn.Add($sessionobj)
+
+                    $sessionobj
+                }
             }
+            # Generate a pseudo-session if API keys are provided and work
+            elseif ($AccessKey -and $SecretKey) {
+                $RestMethodParams = @{
+                    'Method' = 'Get'
+                    'URI' =  "$($URI)"
+                    'Headers' = @{'X-ApiKeys' = "accessKey=$accessKey; secretKey=$secretKey"}
+                    'ErrorVariable' = 'NessusLoginError'
+                }
+                $null = Invoke-RestMethod @RestMethodParams
+                if (!$NessusLoginError) {
+                    $SessionProps.add('URI', $URI)
+                    $SessionProps.Add('Token',@{
+                        AccessKey = $AccessKey
+                        SecretKey = $SecretKey
+                    })
+                    $SessionIndex = $Global:NessusConn.Count
+                    $SessionProps.Add('SessionId', $SessionIndex)
+                    $sessionobj = New-Object -TypeName psobject -Property $SessionProps
+                    $sessionobj.pstypenames[0] = 'Nessus.Session'
 
-            $TokenResponse = Invoke-RestMethod @RestMethodParams
-            if ($TokenResponse)
-            {
-                $SessionProps.add('URI', $URI)
-                $SessionProps.Add('Credentials',$Credentials)
-                $SessionProps.add('Token',$TokenResponse.token)
-                $SessionIndex = $Global:NessusConn.Count
-                $SessionProps.Add('SessionId', $SessionIndex)
-                $sessionobj = New-Object -TypeName psobject -Property $SessionProps
-                $sessionobj.pstypenames[0] = 'Nessus.Session'
-                
-                [void]$Global:NessusConn.Add($sessionobj) 
+                    [void]$Global:NessusConn.Add($sessionobj)
 
-                $sessionobj
+                    $sessionobj
+                }
             }
         }
     }
@@ -204,13 +238,13 @@ function Remove-NessusSession
         # error for a collection in use.
         $connections = $Global:NessusConn
         $toremove = New-Object -TypeName System.Collections.ArrayList
-        
+
         if ($SessionId.Count -gt 0)
         {
             foreach($i in $SessionId)
             {
                 Write-Verbose -Message "Removing server session $($i)"
-                
+
                 foreach($Connection in $connections)
                 {
                     if ($Connection.SessionId -eq $i)
@@ -238,8 +272,8 @@ function Remove-NessusSession
                 {
                     Write-Verbose -Message "Session with Id $($connection.SessionId) seems to have expired."
                 }
-                 
-                
+
+
                 Write-Verbose -message "Removing session from `$Global:NessusConn"
                 $Global:NessusConn.Remove($Connection)
                 Write-Verbose -Message "Session $($i) removed."
@@ -265,12 +299,12 @@ function Remove-NessusSession
     Id         : 2
     Name       : carlos
     UserName   : carlos
-    Email      : 
+    Email      :
     Type       : local
     Permission : Sysadmin
     LastLogin  : 2/23/2015 8:58:49 PM
-    Groups     : 
-    Connectors : 
+    Groups     :
+    Connectors :
 #>
 function Get-NessusSessionInfo
 {
@@ -296,7 +330,7 @@ function Get-NessusSessionInfo
         foreach($i in $SessionId)
         {
             Write-Verbose "Removing server session $($i)"
-                
+
             foreach($Connection in $connections)
             {
                 if ($Connection.SessionId -eq $i)
