@@ -13,11 +13,11 @@
     Name            : Whole Lab
     ScanId          : 46
     Status          : running
-    Enabled         : 
+    Enabled         :
     Owner           : carlos
-    AlternateTarget : 
-    IsPCI           : 
-    UserPermission  : 
+    AlternateTarget :
+    IsPCI           :
+    UserPermission  :
     CreationDate    : 2/24/2015 6:17:11 AM
     LastModified    : 2/24/2015 6:17:11 AM
     StartTime       : 12/31/1969 8:00:00 PM
@@ -31,10 +31,10 @@
     Enabled        : False
     FolderId       : 2
     Owner          : carlos
-    UserPermission : 
-    Rules          : 
+    UserPermission :
+    Rules          :
     Shared         : False
-    TimeZone       : 
+    TimeZone       :
     CreationDate   : 2/24/2015 6:17:11 AM
     LastModified   : 2/24/2015 6:22:17 AM
     StartTime      : 12/31/1969 8:00:00 PM
@@ -56,7 +56,7 @@ function Suspend-NessusScan
                    Position=1,
                    ValueFromPipelineByPropertyName=$true)]
         [int32]
-        $ScanId 
+        $ScanId
     )
 
     Begin
@@ -70,7 +70,7 @@ function Suspend-NessusScan
         foreach($i in $SessionId)
         {
             $Connections = $Global:NessusConn
-            
+
             foreach($Connection in $Connections)
             {
                 if ($Connection.SessionId -eq $i)
@@ -79,7 +79,7 @@ function Suspend-NessusScan
                 }
             }
         }
-        
+
         foreach($Connection in $ToProcess)
         {
             $Scans =  InvokeNessusRestRequest -SessionObject $Connection -Path "/scans/$($ScanId)/pause" -Method 'Post'
@@ -123,11 +123,11 @@ function Suspend-NessusScan
     Name            : Whole Lab
     ScanId          : 46
     Status          : paused
-    Enabled         : 
+    Enabled         :
     Owner           : carlos
-    AlternateTarget : 
-    IsPCI           : 
-    UserPermission  : 
+    AlternateTarget :
+    IsPCI           :
+    UserPermission  :
     CreationDate    : 2/24/2015 6:17:11 AM
     LastModified    : 2/24/2015 6:17:11 AM
     StartTime       : 12/31/1969 8:00:00 PM
@@ -144,10 +144,10 @@ function Suspend-NessusScan
     Enabled        : False
     FolderId       : 2
     Owner          : carlos
-    UserPermission : 
-    Rules          : 
+    UserPermission :
+    Rules          :
     Shared         : False
-    TimeZone       : 
+    TimeZone       :
     CreationDate   : 2/24/2015 6:17:11 AM
     LastModified   : 2/24/2015 6:25:34 AM
     StartTime      : 12/31/1969 8:00:00 PM
@@ -169,7 +169,7 @@ function Resume-NessusScan
                    Position=1,
                    ValueFromPipelineByPropertyName=$true)]
         [int32]
-        $ScanId 
+        $ScanId
     )
 
     Begin
@@ -183,7 +183,7 @@ function Resume-NessusScan
         foreach($i in $SessionId)
         {
             $Connections = $Global:NessusConn
-            
+
             foreach($Connection in $Connections)
             {
                 if ($Connection.SessionId -eq $i)
@@ -192,7 +192,7 @@ function Resume-NessusScan
                 }
             }
         }
-        
+
 
         foreach($Connection in $ToProcess)
         {
@@ -239,11 +239,11 @@ function Resume-NessusScan
     Name            : Whole Lab
     ScanId          : 46
     Status          : running
-    Enabled         : 
+    Enabled         :
     Owner           : carlos
-    AlternateTarget : 
-    IsPCI           : 
-    UserPermission  : 
+    AlternateTarget :
+    IsPCI           :
+    UserPermission  :
     CreationDate    : 2/24/2015 6:17:11 AM
     LastModified    : 2/24/2015 6:17:11 AM
     StartTime       : 12/31/1969 8:00:00 PM
@@ -251,7 +251,7 @@ function Resume-NessusScan
 
 
 
-    PS C:\> Get-NessusScan -SessionId 0 
+    PS C:\> Get-NessusScan -SessionId 0
 
 
     Name           : Whole Lab
@@ -260,10 +260,10 @@ function Resume-NessusScan
     Enabled        : False
     FolderId       : 2
     Owner          : carlos
-    UserPermission : 
-    Rules          : 
+    UserPermission :
+    Rules          :
     Shared         : False
-    TimeZone       : 
+    TimeZone       :
     CreationDate   : 2/24/2015 6:17:11 AM
     LastModified   : 2/24/2015 6:27:20 AM
     StartTime      : 12/31/1969 8:00:00 PM
@@ -286,7 +286,7 @@ function Stop-NessusScan
                    Position=1,
                    ValueFromPipelineByPropertyName=$true)]
         [int32]
-        $ScanId 
+        $ScanId
     )
 
     Begin
@@ -300,7 +300,7 @@ function Stop-NessusScan
         foreach($i in $SessionId)
         {
             $Connections = $Global:NessusConn
-            
+
             foreach($Connection in $Connections)
             {
                 if ($Connection.SessionId -eq $i)
@@ -309,7 +309,7 @@ function Stop-NessusScan
                 }
             }
         }
-        
+
 
         foreach($Connection in $ToProcess)
         {
@@ -352,9 +352,9 @@ function Stop-NessusScan
 .EXAMPLE
    Start-NessusScan -SessionId 0 -ScanId 15 -AlternateTarget 192.168.11.11,192.168.11.12
 
-    ScanUUID                                                                                                                                                                 
-    --------                                                                                                                                                                 
-    70aff007-3e61-242f-e90c-ee96ace62ca57ea8eb669c32205a                                                                                                                     
+    ScanUUID
+    --------
+    70aff007-3e61-242f-e90c-ee96ace62ca57ea8eb669c32205a
 
 
 
@@ -368,9 +368,9 @@ function Stop-NessusScan
     FolderId       : 2
     Owner          : carlos
     UserPermission : Sysadmin
-    Rules          : 
+    Rules          :
     Shared         : False
-    TimeZone       : 
+    TimeZone       :
     CreationDate   : 2/25/2015 7:39:49 PM
     LastModified   : 2/25/2015 7:40:28 PM
     StartTime      : 12/31/1969 8:00:00 PM
@@ -398,7 +398,7 @@ function Start-NessusScan
                    Position=2,
                    ValueFromPipelineByPropertyName=$true)]
         [string[]]
-        $AlternateTarget 
+        $AlternateTarget
     )
 
     Begin
@@ -412,7 +412,7 @@ function Start-NessusScan
         foreach($i in $SessionId)
         {
             $Connections = $Global:NessusConn
-            
+
             foreach($Connection in $Connections)
             {
                 if ($Connection.SessionId -eq $i)
@@ -468,9 +468,9 @@ function Start-NessusScan
     FolderId       : 2
     Owner          : carlos
     UserPermission : Sysadmin
-    Rules          : 
+    Rules          :
     Shared         : False
-    TimeZone       : 
+    TimeZone       :
     CreationDate   : 2/25/2015 2:45:53 PM
     LastModified   : 2/25/2015 2:46:34 PM
     StartTime      : 12/31/1969 8:00:00 PM
@@ -482,9 +482,9 @@ function Start-NessusScan
     FolderId       : 2
     Owner          : carlos
     UserPermission : Sysadmin
-    Rules          : 
+    Rules          :
     Shared         : False
-    TimeZone       : 
+    TimeZone       :
     CreationDate   : 2/24/2015 6:32:45 AM
     LastModified   : 2/24/2015 6:46:20 AM
     StartTime      : 12/31/1969 8:00:00 PM
@@ -496,9 +496,9 @@ function Start-NessusScan
     FolderId       : 2
     Owner          : carlos
     UserPermission : Sysadmin
-    Rules          : 
+    Rules          :
     Shared         : False
-    TimeZone       : 
+    TimeZone       :
     CreationDate   : 2/18/2015 5:40:54 PM
     LastModified   : 2/18/2015 5:41:01 PM
     StartTime      : 12/31/1969 8:00:00 PM
@@ -510,9 +510,9 @@ function Start-NessusScan
     FolderId       : 2
     Owner          : carlos
     UserPermission : Sysadmin
-    Rules          : 
+    Rules          :
     Shared         : False
-    TimeZone       : 
+    TimeZone       :
     CreationDate   : 2/13/2015 9:12:31 PM
     LastModified   : 2/13/2015 9:19:04 PM
     StartTime      : 12/31/1969 8:00:00 PM
@@ -555,7 +555,7 @@ function Get-NessusScan
         foreach($i in $SessionId)
         {
             $Connections = $Global:NessusConn
-            
+
             foreach($Connection in $Connections)
             {
                 if ($Connection.SessionId -eq $i)
@@ -577,7 +577,7 @@ function Get-NessusScan
 
             if ($Scans -is [psobject])
             {
-                
+
                 if($Status.length -gt 0)
                 {
                     $Scans2Process = $Scans.scans | Where-Object {$_.status -eq $Status.ToLower()}
@@ -601,7 +601,7 @@ function Get-NessusScan
                     $ScanProps.add('TimeZone', $scan.timezone)
                     $ScanProps.add('Scheduled', $scan.control)
                     $ScanProps.add('DashboardEnabled', $scan.use_dashboard)
-                    $ScanProps.Add('SessionId', $Connection.SessionId)                 
+                    $ScanProps.Add('SessionId', $Connection.SessionId)
                     $ScanProps.add('CreationDate', $origin.AddSeconds($scan.creation_date).ToLocalTime())
                     $ScanProps.add('LastModified', $origin.AddSeconds($scan.last_modification_date).ToLocalTime())
 
@@ -678,8 +678,8 @@ function Export-NessusScan
         [Parameter(Mandatory=$false,
                    Position=3,
                    ValueFromPipelineByPropertyName=$true)]
-        [ValidateSet('Vuln_Hosts_Summary', 'Vuln_By_Host', 
-                     'Compliance_Exec', 'Remediations', 
+        [ValidateSet('Vuln_Hosts_Summary', 'Vuln_By_Host',
+                     'Compliance_Exec', 'Remediations',
                      'Vuln_By_Plugin', 'Compliance', 'All')]
         [string[]]
         $Chapters,
@@ -707,7 +707,7 @@ function Export-NessusScan
         foreach($i in $SessionId)
         {
             $Connections = $Global:NessusConn
-            
+
             foreach($Connection in $Connections)
             {
                 if ($Connection.SessionId -eq $i)
@@ -732,14 +732,14 @@ function Export-NessusScan
 
         if($Chapters)
         {
-            if ($Chapters -contains 'All') 
+            if ($Chapters -contains 'All')
             {
                 $ExportParams.Add('chapters', 'vuln_hosts_summary;vuln_by_host;compliance_exec;remediations;vuln_by_plugin;compliance')
             }
             else
-            {           
+            {
                 $ExportParams.Add('chapters',$Chapters.ToLower())
-            }       
+            }
         }
 
         foreach($Connection in $ToProcess)
@@ -823,7 +823,7 @@ function Show-NessusScanDetail
                    Position=2,
                    ValueFromPipelineByPropertyName=$true)]
         [Int32]
-        $HistoryId 
+        $HistoryId
     )
 
     Begin
@@ -837,7 +837,7 @@ function Show-NessusScanDetail
         foreach($i in $SessionId)
         {
             $Connections = $Global:NessusConn
-            
+
             foreach($Connection in $Connections)
             {
                 if ($Connection.SessionId -eq $i)
@@ -859,7 +859,7 @@ function Show-NessusScanDetail
 
             if ($ScanDetails -is [psobject])
             {
-                
+
                 $ScanDetailProps = [ordered]@{}
                 $hosts = @()
                 $history = @()
@@ -902,7 +902,7 @@ function Show-NessusScanDetail
                     $HostObj = New-Object -TypeName psobject -Property $HostProps
                     $HostObj.pstypenames[0] = 'Nessus.Scan.Host'
                     $hosts += $HostObj
-                } 
+                }
 
                 # Process history info.
                 foreach ($ScanHistory in $ScanDetails.history)
@@ -936,16 +936,16 @@ function Show-NessusScanDetail
    Show-NessusScanHostDetail -SessionId 0 -ScanId 46 -HostId 31 | fl
 
 
-    Info            : @{host_start=Tue Feb 24 06:32:45 2015; host-fqdn=fw1.darkoperator.com; 
-                       host_end=Tue Feb 24 06:35:52 2015; operating-system=FreeBSD 8.3-RELEASE-p16 
+    Info            : @{host_start=Tue Feb 24 06:32:45 2015; host-fqdn=fw1.darkoperator.com;
+                       host_end=Tue Feb 24 06:35:52 2015; operating-system=FreeBSD 8.3-RELEASE-p16
                       (i386); host-ip=192.168.1.1}
-    Vulnerabilities : {@{count=1; hostname=192.168.1.1; plugin_name=Nessus Scan Information; vuln_index=0; 
-                      severity=0; plugin_id=19506; severity_index=0; plugin_family=Settings; host_id=31}, 
-                      @{count=3; hostname=192.168.1.1; plugin_name=Nessus SYN scanner; vuln_index=1; severity=0; 
-                      plugin_id=11219; 
+    Vulnerabilities : {@{count=1; hostname=192.168.1.1; plugin_name=Nessus Scan Information; vuln_index=0;
+                      severity=0; plugin_id=19506; severity_index=0; plugin_family=Settings; host_id=31},
+                      @{count=3; hostname=192.168.1.1; plugin_name=Nessus SYN scanner; vuln_index=1; severity=0;
+                      plugin_id=11219;
                       severity_index=1; plugin_family=Port scanners; host_id=31}, @{count=1;
-                      hostname=192.168.1.1; plugin_name=Unsupported Unix Operating System; 
-                      vuln_index=2; severity=4; plugin_id=33850; severity_index=2; 
+                      hostname=192.168.1.1; plugin_name=Unsupported Unix Operating System;
+                      vuln_index=2; severity=4; plugin_id=33850; severity_index=2;
                       plugin_family=General; host_id=31}}
     Compliance      : {}
 #>
@@ -978,7 +978,7 @@ function Show-NessusScanHostDetail
                    Position=3,
                    ValueFromPipelineByPropertyName=$true)]
         [Int32]
-        $HistoryId 
+        $HistoryId
     )
 
     Begin{}
@@ -989,7 +989,7 @@ function Show-NessusScanHostDetail
         foreach($i in $SessionId)
         {
             $Connections = $Global:NessusConn
-            
+
             foreach($Connection in $Connections)
             {
                 if ($Connection.SessionId -eq $i)
@@ -1010,7 +1010,7 @@ function Show-NessusScanHostDetail
             $ScanDetails =  InvokeNessusRestRequest -SessionObject $Connection -Path "/scans/$($ScanId)/hosts/$($HostId)" -Method 'Get' -Parameter $Params
 
             if ($ScanDetails -is [psobject])
-            {                
+            {
                 $HostProps = [ordered]@{}
                 $HostProps.Add('Info', $ScanDetails.info)
                 $HostProps.Add('Vulnerabilities', $ScanDetails.vulnerabilities)
@@ -1019,7 +1019,7 @@ function Show-NessusScanHostDetail
                 $HostProps.Add('SessionId', $Connection.SessionId)
                 $HostObj = New-Object -TypeName psobject -Property $HostProps
                 $HostObj.pstypenames[0] = 'Nessus.Scan.HostDetails'
-                $HostObj             
+                $HostObj
             }
         }
     }
@@ -1108,7 +1108,7 @@ function Show-NessusScanHost
                    Position=2,
                    ValueFromPipelineByPropertyName=$true)]
         [Int32]
-        $HistoryId 
+        $HistoryId
     )
 
     Begin{}
@@ -1119,7 +1119,7 @@ function Show-NessusScanHost
         foreach($i in $SessionId)
         {
             $Connections = $Global:NessusConn
-            
+
             foreach($Connection in $Connections)
             {
                 if ($Connection.SessionId -eq $i)
@@ -1156,7 +1156,7 @@ function Show-NessusScanHost
                     $HostObj = New-Object -TypeName psobject -Property $HostProps
                     $HostObj.pstypenames[0] = 'Nessus.Scan.Host'
                     $HostObj
-                } 
+                }
             }
         }
     }
@@ -1232,7 +1232,7 @@ function Show-NessusScanHistory
         foreach($i in $SessionId)
         {
             $Connections = $Global:NessusConn
-            
+
             foreach($Connection in $Connections)
             {
                 if ($Connection.SessionId -eq $i)
@@ -1267,7 +1267,7 @@ function Show-NessusScanHistory
                     $HistObj = New-Object -TypeName psobject -Property $HistoryProps
                     $HistObj.pstypenames[0] = 'Nessus.Scan.History'
                     $HistObj
-                } 
+                }
             }
         }
     }
@@ -1363,7 +1363,7 @@ function New-NessusScan
         foreach($i in $SessionId)
         {
             $Connections = $Global:NessusConn
-            
+
             foreach($Connection in $Connections)
             {
                 if ($Connection.SessionId -eq $i)
@@ -1373,7 +1373,7 @@ function New-NessusScan
             }
         }
 
-        
+
 
         $origin = New-Object -Type DateTime -ArgumentList 1970, 1, 1, 0, 0, 0, 0
 
@@ -1405,7 +1405,7 @@ function New-NessusScan
             {
                 'Template'{
                     Write-Verbose -Message "Using Template with UUID of $($PolicyUUID)"
-                    $scanhash = [ordered]@{ 
+                    $scanhash = [ordered]@{
                         'uuid' = $PolicyUUID
                         'settings' = $settings
                     }
@@ -1413,7 +1413,7 @@ function New-NessusScan
 
                 'Policy'{
                     $polUUID = $null
-                    $Policies = Get-NessusPolicy -SessionId $Connection.SessionId 
+                    $Policies = Get-NessusPolicy -SessionId $Connection.SessionId
                     foreach($Policy in $Policies)
                     {
                         if ($Policy.PolicyId -eq $PolicyId)
@@ -1430,10 +1430,10 @@ function New-NessusScan
                     }
                     else
                     {
-                        $scanhash = [ordered]@{ 
+                        $scanhash = [ordered]@{
                             'uuid' = $polUUID
                             'settings' = $settings
-                        }                      
+                        }
                     }
                 }
             }
@@ -1449,7 +1449,7 @@ function New-NessusScan
             }
 
             $NewScan =  InvokeNessusRestRequest @ServerTypeParams
-            
+
             foreach ($scan in $NewScan.scan)
             {
                 $ScanProps = [ordered]@{}
@@ -1469,7 +1469,7 @@ function New-NessusScan
                 $ScanProps.add('Scheduled', $scan.control)
                 $ScanProps.add('DashboardEnabled', $scan.use_dashboard)
                 $ScanProps.Add('SessionId', $Connection.SessionId)
-                    
+
                 $ScanObj = New-Object -TypeName psobject -Property $ScanProps
                 $ScanObj.pstypenames[0] = 'Nessus.Scan'
                 $ScanObj
@@ -1542,7 +1542,7 @@ function Remove-NessusScan
         foreach($i in $SessionId)
         {
             $Connections = $Global:NessusConn
-            
+
             foreach($Connection in $Connections)
             {
                 if ($Connection.SessionId -eq $i)
@@ -1555,14 +1555,14 @@ function Remove-NessusScan
         foreach($Connection in $ToProcess)
         {
             Write-Verbose -Message "Removing scan with Id $($ScanId)"
-            
+
             $ScanDetails =  InvokeNessusRestRequest -SessionObject $Connection -Path "/scans/$($ScanId)" -Method 'Delete' -Parameter $Params
             if ($ScanDetails -eq 'null')
             {
                 Write-Verbose -Message 'Scan Removed'
             }
-            
-            
+
+
         }
     }
     End{}
@@ -1580,7 +1580,7 @@ function Remove-NessusScan
 	VERBOSE: DELETE https://192.168.1.211:8834/scans/263/history/1519 with 0-byte payload
 	VERBOSE: received 0-byte response of content type
     VERBOSE: History Removed
-    
+
 #>
 function Remove-NessusScanHistory
 {
@@ -1616,7 +1616,7 @@ function Remove-NessusScanHistory
         foreach($i in $SessionId)
         {
             $Connections = $Global:NessusConn
-            
+
             foreach($Connection in $Connections)
             {
                 if ($Connection.SessionId -eq $i)
@@ -1629,15 +1629,15 @@ function Remove-NessusScanHistory
         foreach($Connection in $ToProcess)
         {
             Write-Verbose -Message "Removing history Id ($HistoryId) from scan Id $($ScanId)"
-            
+
             $ScanHistoryDetails = InvokeNessusRestRequest -SessionObject $Connection -Path "/scans/$($ScanId)/history/$($HistoryId)" -Method 'Delete' -Parameter $Params
 
             if ($ScanHistoryDetails -eq '')
             {
                 Write-Verbose -Message 'History Removed'
             }
-            
-            
+
+
         }
     }
     End{}
@@ -1729,7 +1729,7 @@ function Import-NessusScan
         foreach($i in $SessionId)
         {
             $Connections = $Global:NessusConn
-            
+
             foreach($Connection in $Connections)
             {
                 if ($Connection.SessionId -eq $i)
@@ -1749,7 +1749,7 @@ function Import-NessusScan
             $RestClient.BaseUrl = $Conn.uri
             $RestRequest.Method = [RestSharp.Method]::POST
             $RestRequest.Resource = $URIPath
-            
+
             [void]$RestRequest.AddFile('Filedata',$FilePath, 'application/octet-stream')
             [void]$RestRequest.AddHeader('X-Cookie', "token=$($Connection.Token)")
             $result = $RestClient.Execute($RestRequest)
@@ -1789,7 +1789,7 @@ function Import-NessusScan
                     $ScanProps.add('Scheduled', $scan.control)
                     $ScanProps.add('DashboardEnabled', $scan.use_dashboard)
                     $ScanProps.Add('SessionId', $Conn.SessionId)
-                    
+
                     $ScanObj = New-Object -TypeName psobject -Property $ScanProps
                     $ScanObj.pstypenames[0] = 'Nessus.Scan'
                     $ScanObj
@@ -1831,7 +1831,7 @@ function Get-NessusScanTemplate
         foreach($i in $SessionId)
         {
             $Connections = $Global:NessusConn
-            
+
             foreach($Connection in $Connections)
             {
                 if ($Connection.SessionId -eq $i)
@@ -1843,7 +1843,7 @@ function Get-NessusScanTemplate
     }
     Process
     {
-        
+
 
         foreach($Connection in $ToProcess)
         {
@@ -1871,6 +1871,357 @@ function Get-NessusScanTemplate
     End
     {
     }
+}
+
+<#
+.Synopsis
+   Return a list of supported timezones from the Nessus server.
+.DESCRIPTION
+   Calls the nessus /scans/timezones endpoint to return a list of timezone names and
+   values to be referenced in any scheduling calls.
+.EXAMPLE
+   Get-NessusTimezones -SessionId 0
+   Returns a list of supported timezones
+#>
+function Get-NessusTimezones
+{
+    [CmdletBinding()]
+    Param
+    (
+        # Nessus session Id
+        [Parameter(Mandatory=$true,
+                   Position=0,
+                   ValueFromPipelineByPropertyName=$true)]
+        [Alias('Index')]
+        [int32[]]
+        $SessionId = @()
+    )
+
+    Begin {}
+    Process {
+        $ToProcess = @()
+
+        foreach($i in $SessionId)
+        {
+            $Connections = $Global:NessusConn
+
+            foreach($Connection in $Connections)
+            {
+                if ($Connection.SessionId -eq $i)
+                {
+                    $ToProcess += $Connection
+                }
+            }
+        }
+        foreach($Connection in $ToProcess)
+        {
+            $timezones = InvokeNessusRestRequest -SessionObject $Connection -Path '/scans/timezones' -Method 'Get'
+            $timezones.timezones
+        }
+    }
+}
+
+<#
+.Synopsis
+   Set scan schedule for an existing scan
+.DESCRIPTION
+   Long description
+.EXAMPLE
+    Set-NessusScanSchedule <SessionID[]> <ScanID[]> -Frequency 'Daily' -StartTime '2018-03-30 12:30'
+    Repeat a scan daily at 12:30 PM
+.EXAMPLE
+    Set-NessusScanSchedule <SessionID[]> <ScanID[]> -Frequency 'Weekly' -ByDay 'MO,FR' -Interval 2 -StartTime '2018-03-30 12:30'
+    Repeat a scan every two weeks on Monday and Friday at 12:30 PM
+.EXAMPLE
+    Set-NessusScanSchedule <SessionID[]> <ScanID[]> -Frequency 'Monthly' -RepeatBy 'Week of Month' -StartTime '2018-03-13 12:30'
+    Repeat a scan monthly on the second Tuesday at 12:30 PM
+.EXAMPLE
+    Set-NessusScanSchedule <SessionID[]> <ScanID[]> -Frequency 'Monthly' -RepeatBy 'Week of Month' -Interval 3 -StartTime '2018-03-13 12:30'
+    Repeat a scan every three months on day 13 at 12:30 PM
+.EXAMPLE
+    Set-NessusScanSchedule <SessionID[]> <ScanID[]> -Frequency 'Yearly' -StartTime '2018-03-30 12:30' -Timezone 'UTC'
+    Repeat a scan every year on March 30th at 12:30 PM UTC
+.EXAMPLE
+   Set-NessusScanSchedule <SessionID[]> <ScanID[]> -Enabled $false
+   Disable an existing scan schedule
+.EXAMPLE
+   Set-NessusScanSchedule <SessionID[]> <ScanID[]> -Enabled $true
+   Enable an existing scan schedule
+#>
+function Set-NessusScanSchedule
+{
+    [CmdletBinding(DefaultParameterSetName='EnableOnly')]
+    Param
+    (
+        # Nessus session Id
+        [Parameter(Mandatory=$true,
+                   Position=0,
+                   ValueFromPipelineByPropertyName=$true)]
+        [Alias('Index')]
+        [int32[]]$SessionId = @(),
+
+        [Parameter(Mandatory=$true,
+                   Position=1,
+                   ValueFromPipelineByPropertyName=$true)]
+        [int[]]$ScanId,
+
+        [Parameter(Mandatory=$true,
+                   Position=2,
+                   ParameterSetName='ScheduleScan')]
+        [ValidateSet('Onetime','Daily','Weekly','Monthly','Yearly')]
+        [string]$Frequency,
+
+        [Parameter(Mandatory=$true,
+                   Position=3,
+                   ParameterSetName='ScheduleScan')]
+        [datetime]$StartTime,
+
+        [Parameter(Position=7,ParameterSetName='EnableOnly')]
+        [Parameter(Position=7,ParameterSetName='ScheduleScan')]
+        [Bool]$Enabled = $true
+    )
+    DynamicParam {
+        $paramList = New-Object System.Management.Automation.RuntimeDefinedParameterDictionary
+
+        # Interval is mandatory unless frequency is 'Onetime'
+        if ($Frequency -ne 'Onetime') {
+            # Set the dynamic parameters' name
+            $ParameterName = 'Interval'
+
+            # Create the collection of attributes
+            $AttributeCollection = New-Object System.Collections.ObjectModel.Collection[System.Attribute]
+
+            # Create and set the parameters' attributes
+            $ParameterAttribute = New-Object System.Management.Automation.ParameterAttribute
+            $ParameterAttribute.Position = 4
+
+            # Add the attributes to the attributes collection
+            $AttributeCollection.Add($ParameterAttribute)
+
+            # Create and return the dynamic parameter
+            $RuntimeParameter = New-Object System.Management.Automation.RuntimeDefinedParameter(
+                $ParameterName,
+                [int32],
+                $AttributeCollection
+            )
+            $paramList.Add($ParameterName, $RuntimeParameter)
+        }
+
+        # RepeatBy is necessary only if Frequency is Monthly
+        if ($Frequency -eq 'Monthly') {
+            # Set the dynamic parameters' name
+            $ParameterName = 'RepeatBy'
+
+            # Create the collection of attributes
+            $AttributeCollection = New-Object System.Collections.ObjectModel.Collection[System.Attribute]
+
+            # Create and set the parameters' attributes
+            $ParameterAttribute = New-Object System.Management.Automation.ParameterAttribute
+            $ParameterAttribute.Mandatory = $true
+            $ParameterAttribute.Position = 5
+
+            # Add the attributes to the attributes collection
+            $AttributeCollection.Add($ParameterAttribute)
+
+            # Add the ValidateSet to the attributes collection
+            $ValidateSetAttribute = New-Object System.Management.Automation.ValidateSetAttribute('Day of Month','Week of Month')
+            $AttributeCollection.Add($ValidateSetAttribute)
+
+            # Create and return the dynamic parameter
+            $RuntimeParameter = New-Object System.Management.Automation.RuntimeDefinedParameter(
+                $ParameterName,
+                [string],
+                $AttributeCollection
+            )
+
+            $paramList.Add($ParameterName, $RuntimeParameter)
+        }
+
+        # ByDay is only necessary if Frequency is Weekly, defaults to the current day (not mandatory)
+        if ($Frequency -eq 'Weekly') {
+            # Set the dynamic parameters' name
+            $ParameterName = 'ByDay'
+
+            # Create the collection of attributes
+            $AttributeCollection = New-Object System.Collections.ObjectModel.Collection[System.Attribute]
+
+            # Create and set the parameters' attributes
+            $ParameterAttribute = New-Object System.Management.Automation.ParameterAttribute
+            $ParameterAttribute.Position = 5
+
+            # Add the attributes to the attributes collection
+            $AttributeCollection.Add($ParameterAttribute)
+
+            # Create and return the dynamic parameter
+            $RuntimeParameter = New-Object System.Management.Automation.RuntimeDefinedParameter(
+                $ParameterName,
+                [string[]],
+                $AttributeCollection
+            )
+
+            $paramList.Add($ParameterName, $RuntimeParameter)
+        }
+
+        # Pull valid timezone list from the nessus server
+        # Set the dynamic parameters' name
+        $ParameterName = 'Timezone'
+
+        # Create the collection of attributes
+        $AttributeCollection = New-Object System.Collections.ObjectModel.Collection[System.Attribute]
+
+        # Create and set the parameters' attributes
+        $ParameterAttribute = New-Object System.Management.Automation.ParameterAttribute
+        $ParameterAttribute.Position = 6
+
+        # Add the attributes to the attributes collection
+        $AttributeCollection.Add($ParameterAttribute)
+
+        # Add the ValidateSet to the attributes collection
+        $timezones = (Get-NessusTimezones -SessionId $SessionId).value
+        $ValidateSetAttribute = New-Object System.Management.Automation.ValidateSetAttribute($timezones)
+        $AttributeCollection.Add($ValidateSetAttribute)
+
+        # Create and return the dynamic parameter
+        $RuntimeParameter = New-Object System.Management.Automation.RuntimeDefinedParameter(
+            $ParameterName,
+            [string],
+            $AttributeCollection
+        )
+
+        # Set the default timezone value
+        $RuntimeParameter.Value = ([System.TimeZoneInfo]::Local).Id
+
+        $paramList.Add($ParameterName, $RuntimeParameter)
+
+        return $paramList
+    }
+
+    Begin
+    {
+        # Return the day and week of a date (1st Tuesday is 1TU, 3rd Wednesday is 3WE, etc.)
+        Function Get-WeekDay {
+            Param([datetime]$DateTime)
+            if ($DateTime.Day -le 7) {
+                $week = 1
+            }
+            else {
+                $week = (1..$DateTime.Day).ForEach{
+                    Get-Date "$($DateTime.Year)-$($DateTime.Month)-$_"
+                }.Where{$_.DayOfWeek -eq $DateTime.DayOfWeek}.Count
+            }
+            "$week$($DateTime.DayOfWeek.ToString().Substring(0,2))".ToUpper()
+        }
+
+        # Bind the parameter values to friendly variable names
+        $Interval = $PsBoundParameters['Interval']
+        $ByDay = $PsBoundParameters['ByDay']
+        $RepeatBy = $PsBoundParameters['RepeatBy']
+        $Timezone = $PsBoundParameters['Timezone']
+
+        # Set default values (doesn't set properly in the Dynamic block, have to do it here)
+        if (!$Interval) {$Interval = 1}
+        if (!$Timezone) {$Timezone = ([System.TimeZoneInfo]::Local).Id}
+
+    }
+    Process
+    {
+        $ToProcess = @()
+
+        foreach($i in $SessionId)
+        {
+            $Connections = $Global:NessusConn
+
+            foreach($Connection in $Connections)
+            {
+                if ($Connection.SessionId -eq $i)
+                {
+                    $ToProcess += $Connection
+                }
+            }
+        }
+
+        foreach($Connection in $ToProcess)
+        {
+            $ScanId | ForEach-Object {
+                $ScanDetails =  InvokeNessusRestRequest -SessionObject $Connection -Path "/scans/$_" -Method 'Get' -Parameter $Params
+
+                if ($ScanDetails -is [psobject])
+                {
+                    # Set the rrules based on the frequency type
+                    switch ($Frequency) {
+                        'Onetime' {
+                            $rRules = 'FREQ=ONETIME'
+                        }
+                        'Daily' {
+                            $rRules = "FREQ=$Frequency;INTERVAL=$Interval"
+                        }
+                        'Weekly' {
+                            if (!$ByDay) {$ByDay = $StartTime.DayOfWeek.ToString().Substring(0,2)}
+                            $rRules = "FREQ=$Frequency;INTERVAL=$Interval;BYDAY=$($ByDay -join ',')"
+                        }
+                        'Monthly' {
+                            switch ($RepeatBy) {
+                                'Day of Month' {
+                                    $rRules = "FREQ=$Frequency;INTERVAL=$Interval;BYMONTHDAY=$($StartTime.Day)"
+                                }
+                                'Week of Month' {
+                                    $byDay = Get-WeekDay $StartTime
+                                    $rRules = "FREQ=$Frequency;INTERVAL=$Interval;BYDAY=$byDay"
+                                }
+                            }
+                        }
+                        'Yearly' {
+                            $rRules = "FREQ=$Frequency;INTERVAL=$Interval"
+                        }
+                    }
+
+                    # Set the scanparams based on the parameter set used, set a scan schedule or just enable/disable?
+                    if ($PSCmdlet.ParameterSetName -eq 'ScheduleScan') {
+                        # Set the scheduling parameters
+                        $scanParams = @{
+                            settings = @{
+                                enabled = $enabled
+                                timezone = $Timezone
+                                rrules = $rRules.ToUpper()
+                                starttime = $StartTime.ToString('yyyyMMddTHHmmss')
+                                text_targets = $ScanDetails.info.targets
+                            }
+                        }
+                    }
+                    elseif ($PSCmdlet.ParameterSetName -eq 'EnableOnly') {
+                        $scanParams = @{
+                            settings = @{
+                                enabled = $enabled
+                                text_targets = $ScanDetails.info.targets
+                            }
+                        }
+                    }
+
+                    # Convert the settings to JSON format for use by the API
+                    $json = ConvertTo-Json -InputObject $scanParams -Compress
+                    $ServerTypeParams = @{
+                         'SessionObject' = $Connection
+                         'Path' = "/scans/$_"
+                         'Method' = 'PUT'
+                         'ContentType' = 'application/json'
+                         'Parameter' = $json
+                    }
+                    $return = InvokeNessusRestRequest @ServerTypeParams
+                    # Format the returned data
+                    Return [PSCustomObject]@{
+                        ScanID = $_
+                        Name = $return.name
+                        Description = $return.description
+                        StartTime = [datetime]::ParseExact($return.starttime,'yyyyMMddTHHmmss',$null)
+                        Timezone = $return.timezone
+                        RepeatRules = $return.rrules
+                        Enabled = $return.enabled
+                    }
+                }
+            }
+        }
+    }
+    End{}
 }
 
 
