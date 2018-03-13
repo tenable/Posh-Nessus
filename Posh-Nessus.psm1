@@ -1,8 +1,8 @@
-﻿if (!(Test-Path variable:Global:NessusConn ))
+if (!(Test-Path variable:Global:NessusConn ))
 {
     $Global:NessusConn = New-Object System.Collections.ArrayList
 }
- 
+
  # Variables
  $PermissionsId2Name = @{
     16 = 'Read-Only'
@@ -24,7 +24,7 @@
     2 ='Medium'
     3 ='High'
     4 ='Critical'
- } 
+ }
 
  # Load Functions
 
@@ -70,13 +70,19 @@ function InvokeNessusRestRequest
 
     )
 
-    
+
 
     $RestMethodParams = @{
         'Method'        = $Method
         'URI'           =  "$($SessionObject.URI)$($Path)"
-        'Headers'       = @{'X-Cookie' = "token=$($SessionObject.Token)"}
         'ErrorVariable' = 'NessusUserError'
+    }
+
+    # Add the token header if Credentials are used
+    if ($SessionObject.Credentials) {
+        $RestMethodParams['Headers'] = @{'X-Cookie' = "token=$($SessionObject.Token)"}
+    } else {
+        $RestMethodParams['Headers'] = @{'X-ApiKeys' = "accessKey=$($SessionObject.Token.AccessKey); secretKey=$($SessionObject.Token.SecretKey)"}
     }
 
     if ($Parameter)
@@ -103,9 +109,9 @@ function InvokeNessusRestRequest
     {
         #$RestMethodParams.Uri
         $Results = Invoke-RestMethod @RestMethodParams
-   
+
     }
-    catch [Net.WebException] 
+    catch [Net.WebException]
     {
         [int]$res = $_.Exception.Response.StatusCode
         if ($res -eq 401)
@@ -156,4 +162,3 @@ function InvokeNessusRestRequest
     }
     $Results
 }
-
