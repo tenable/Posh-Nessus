@@ -1939,8 +1939,14 @@ function Get-NessusTimezones
     Set-NessusScanSchedule <SessionID[]> <ScanID[]> -Frequency 'Monthly' -RepeatBy 'Week of Month' -Interval 3 -StartTime '2018-03-13 12:30'
     Repeat a scan every three months on day 13 at 12:30 PM
 .EXAMPLE
-    Set-NessusScanSchedule <SessionID[]> <ScanID[]> -Frequency 'Yearly ' -StartTime '2018-03-30 12:30'
-    Repeat a scan every year on months on day 13 at 12:30 PM
+    Set-NessusScanSchedule <SessionID[]> <ScanID[]> -Frequency 'Yearly' -StartTime '2018-03-30 12:30' -Timezone 'UTC'
+    Repeat a scan every year on March 30th at 12:30 PM UTC
+.EXAMPLE
+   Set-NessusScanSchedule <SessionID[]> <ScanID[]> -Enabled $false
+   Disable an existing scan schedule
+.EXAMPLE
+   Set-NessusScanSchedule <SessionID[]> <ScanID[]> -Enabled $true
+   Enable an existing scan schedule
 #>
 function Set-NessusScanSchedule
 {
@@ -2169,7 +2175,7 @@ function Set-NessusScanSchedule
                         }
                     }
 
-                    # Set the scanparams based on the parameter set used, set a scan schedule or just enable/disable? 
+                    # Set the scanparams based on the parameter set used, set a scan schedule or just enable/disable?
                     if ($PSCmdlet.ParameterSetName -eq 'ScheduleScan') {
                         # Set the scheduling parameters
                         $scanParams = @{
