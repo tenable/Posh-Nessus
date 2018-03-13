@@ -31,22 +31,21 @@ function New-NessusSession
         [int]
         $Port = 8834,
 
-
         # Credentials for connecting to the Nessus Server
         [Parameter(Mandatory=$true,
-        Position=1,
-        ParameterSetName='Credentials')]
+                   Position=1,
+                   ParameterSetName='Credentials')]
         [Management.Automation.PSCredential]$Credentials,
 
         # API keys (alternative to Credentials)
         [Parameter(Mandatory=$true,
-        Position=1,
-        ParameterSetName='API')]
+                   Position=1,
+                   ParameterSetName='API')]
         [String]$AccessKey,
 
         [Parameter(Mandatory=$true,
-        Position=2,
-        ParameterSetName='API')]
+                   Position=2,
+                   ParameterSetName='API')]
         [String]$SecretKey
     )
 
